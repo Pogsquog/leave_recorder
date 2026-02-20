@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n humanize %}
+{% load i18n humanize calendar_tags %}
 
 {% block title %}{% blocktrans with month=month_data.month year=month_data.year %}{{ month }}/{{ year }} - Holiday Holliday{% endblocktrans %}{% endblock %}
 
@@ -30,21 +30,7 @@
                     <tr>
                         {% for day in "1234567"|make_list %}
                         <th class="p-2 text-sm font-medium text-gray-500 text-center">
-                            {% if forloop.counter == 1 %}
-                                {% if week_start == 1 %}{% trans "Mon" %}{% else %}{% trans "Sun" %}{% endif %}
-                            {% elif forloop.counter == 2 %}
-                                {% if week_start == 1 %}{% trans "Tue" %}{% else %}{% trans "Mon" %}{% endif %}
-                            {% elif forloop.counter == 3 %}
-                                {% if week_start == 1 %}{% trans "Wed" %}{% else %}{% trans "Tue" %}{% endif %}
-                            {% elif forloop.counter == 4 %}
-                                {% if week_start == 1 %}{% trans "Thu" %}{% else %}{% trans "Wed" %}{% endif %}
-                            {% elif forloop.counter == 5 %}
-                                {% if week_start == 1 %}{% trans "Fri" %}{% else %}{% trans "Thu" %}{% endif %}
-                            {% elif forloop.counter == 6 %}
-                                {% if week_start == 1 %}{% trans "Sat" %}{% else %}{% trans "Fri" %}{% endif %}
-                            {% else %}
-                                {% if week_start == 1 %}{% trans "Sun" %}{% else %}{% trans "Sat" %}{% endif %}
-                            {% endif %}
+                            {% get_weekday_name forloop.counter week_start %}
                         </th>
                         {% endfor %}
                     </tr>
