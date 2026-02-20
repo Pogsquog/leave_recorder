@@ -45,9 +45,9 @@ def _notify_org_members(user, message_type, data):
         membership_org_ids = OrganisationMembership.objects.filter(user=user).values_list("organisation_id", flat=True)
 
         for org_id in membership_org_ids:
-            org = OrganisationMembership.objects.filter(organisation_id=org_id).first()
-            if org:
-                group_name = f"org_{org.organisation.slug}"
+            membership = OrganisationMembership.objects.filter(organisation_id=org_id).first()
+            if membership:
+                group_name = f"org_{membership.organisation.slug}"
                 async_to_sync(channel_layer.group_send)(
                     group_name,
                     {
