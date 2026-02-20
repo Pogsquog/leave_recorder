@@ -110,7 +110,15 @@ def api_keys(request):
     elif request.method == "POST":
         name = request.data.get("name", "")
         key = APIKey.objects.create(user=request.user, name=name)
-        return Response({"id": key.id, "key": key.key, "name": key.name}, status=status.HTTP_201_CREATED)
+        return Response(
+            {
+                "id": key.id,
+                "key": key.key,
+                "name": key.name,
+                "warning": "Save this key securely. It will not be shown again.",
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
     elif request.method == "DELETE":
         key_id = request.data.get("id")

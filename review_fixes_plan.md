@@ -73,25 +73,38 @@ if not SECRET_KEY:
 
 ---
 
-### 3. Missing CSRF Exemption on API
+### 3. Missing CSRF Exemption on API ✅
 
-**File:** `apps/api/authentication.py`  
+**Status:** ✅ **COMPLETED** - February 20, 2026
+
+**File:** `apps/api/csrf.py` (new), `config/settings/prod.py`
 **Issue:** API key authentication should explicitly exempt CSRF checks
 
-**Fix:** Add decorator to API views or configure in settings:
+**Fix:** Created custom CSRF middleware that exempts API key authenticated requests:
 
 ```python
-# In settings.py
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'apps.api.authentication.APIKeyAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-    ],
-    'DEFAULT_CSRF_CLASSES': [
-        'rest_framework.csrf.CsrfViewMiddleware',
-    ],
-}
+# apps/api/csrf.py
+from django.middleware.csrf import CsrfViewMiddleware
+
+
+class CsrfExemptMiddleware(CsrfViewMiddleware):
+    """CSRF middleware that exempts requests authenticated via API key."""
+
+    def _accept(self, request):
+        """Mark request as CSRF exempt."""
+        setattr(request, "_csrf_processing_done", True)
+        return None
+
+    def process_view(self, request, callback, callback_args, callback_kwargs):
+        """Skip CSRF check for API key authenticated requests."""
+        if hasattr(request, "user") and request.user.is_authenticated:
+            api_key = request.META.get("HTTP_X_API_KEY") or request.query_params.get("api_key")
+            if api_key:
+                return self._accept(request)
+        return super().process_view(request, callback, callback_args, callback_kwargs)
 ```
+
+Also updated `MIDDLEWARE` in `config/settings/prod.py` to use the custom middleware.
 
 **Estimated Effort:** 30 minutes
 
@@ -99,12 +112,15 @@ REST_FRAMEWORK = {
 
 ## 🟠 P1 - High Priority Security Issues
 
-### 4. Rate Limiting Not Properly Configured
+### 4. Rate Limiting Not Properly Configured ✅
 
-**File:** `config/settings/prod.py:88-95`  
+**Status:** ✅ **COMPLETED** - February 20, 2026
+
+**File:** `config/settings/prod.py`
 **Issue:** Throttling configured but may not work without proper cache backend
 
-**Fix:**
+**Fix:** Added Redis cache configuration and api_key throttle rate:
+
 ```python
 REST_FRAMEWORK = {
     # ... existing config
@@ -115,11 +131,10 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/hour',
         'user': '1000/hour',
-        'api_key': '5000/hour',  # Add specific rate for API keys
+        'api_key': '5000/hour',
     },
 }
 
-# Ensure cache is configured for throttling
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
@@ -132,26 +147,28 @@ CACHES = {
 
 ---
 
-### 5. API Key Exposure Without Warning
+### 5. API Key Exposure Without Warning ✅
 
-**File:** `apps/api/views.py:109`  
+**Status:** ✅ **COMPLETED** - February 20, 2026
+
+**File:** `apps/api/views.py:109`
 **Issue:** API keys shown once without security warning
 
-**Fix:**
+**Fix:** Added warning message to API key creation response:
+
 ```python
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def api_keys(request):
-    # ... existing code
-    elif request.method == "POST":
-        name = request.data.get("name", "")
-        key = APIKey.objects.create(user=request.user, name=name)
-        return Response({
+elif request.method == "POST":
+    name = request.data.get("name", "")
+    key = APIKey.objects.create(user=request.user, name=name)
+    return Response(
+        {
             "id": key.id,
             "key": key.key,
             "name": key.name,
             "warning": "Save this key securely. It will not be shown again.",
-        }, status=status.HTTP_201_CREATED)
+        },
+        status=status.HTTP_201_CREATED,
+    )
 ```
 
 **Estimated Effort:** 15 minutes
