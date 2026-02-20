@@ -10,8 +10,8 @@
 
 The Holiday Holliday project is well-structured and implements most core features correctly. This review identified **26 issues** across security, code quality, missing features, testing, and deployment categories.
 
-**Completed:** 7 issues (#1-#7, #12)
-**Remaining:** 19 issues
+**Completed:** 11 issues (#1-#7, #11, #12, #13, #15)
+**Remaining:** 15 issues
 
 ### Priority Legend
 
@@ -184,7 +184,9 @@ if database_url:
 
 ## 🟢 P3 - Low Priority Improvements
 
-### 15. Add Health Check Endpoints
+### 15. Add Health Check Endpoints ✅
+
+**Status:** COMPLETED
 
 **File:** New file `apps/core/views.py`
 
@@ -193,17 +195,19 @@ from django.http import JsonResponse
 from django.db import connection
 
 def healthz(request):
-    """Basic health check."""
+    """Return basic health check for liveness probes."""
     return JsonResponse({"status": "ok"})
 
 def ready(request):
-    """Readiness check including database."""
+    """Return readiness check including database connectivity."""
     try:
         connection.ensure_connection()
         return JsonResponse({"status": "ready", "database": "ok"})
     except Exception as e:
         return JsonResponse({"status": "not ready", "database": str(e)}, status=503)
 ```
+
+Endpoints available at `/healthz` and `/ready`.
 
 **Estimated Effort:** 30 minutes
 
@@ -441,7 +445,6 @@ Additional test cases:
 26. Edge case tests (#26)
 
 ### Phase 3: Features & Polish
-15. Health checks (#15)
 16. Structured logging (#16)
 17. API docs (#17)
 18. Timezone handling (#18)
@@ -466,16 +469,16 @@ Additional test cases:
 
 ### New Files to Create
 
-| File | Purpose | Priority |
-|------|---------|----------|
-| `templatetags/calendar_tags.py` | Calendar template tags | 🟡 P2 |
-| `apps/api/exceptions.py` | Custom exception handler | 🟡 P2 |
-| `apps/core/views.py` | Health check endpoints | 🟢 P3 |
-| `tests/test_organisations.py` | Organisation tests | 🟠 P1 |
-| `tests/test_signals.py` | Signal tests | 🟠 P1 |
-| `tests/test_websocket.py` | WebSocket tests | 🟠 P1 |
-| `tests/test_integration.py` | Integration tests | 🟠 P1 |
-| `docs/backup.md` | Backup documentation | 🟢 P3 |
+| File | Purpose | Priority | Status |
+|------|---------|----------|--------|
+| `templatetags/calendar_tags.py` | Calendar template tags | 🟡 P2 | Pending |
+| `apps/api/exceptions.py` | Custom exception handler | 🟡 P2 | Pending |
+| `apps/core/views.py` | Health check endpoints | 🟢 P3 | ✅ Created |
+| `tests/test_organisations.py` | Organisation tests | 🟠 P1 | Pending |
+| `tests/test_signals.py` | Signal tests | 🟠 P1 | Pending |
+| `tests/test_websocket.py` | WebSocket tests | 🟠 P1 | Pending |
+| `tests/test_integration.py` | Integration tests | 🟠 P1 | Pending |
+| `docs/backup.md` | Backup documentation | 🟢 P3 | Pending |
 
 ---
 
@@ -485,8 +488,8 @@ Additional test cases:
 |-------|-------|
 | Phase 1: Code Quality (Remaining) | 5.5 hours |
 | Phase 2: Testing | 15 hours |
-| Phase 3: Features & Polish | 10.5 hours |
-| **Total Remaining** | **31 hours** |
+| Phase 3: Features & Polish | 10 hours |
+| **Total Remaining** | **30.5 hours** |
 
 ---
 

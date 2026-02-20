@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "channels",
     "rest_framework",
     "drf_spectacular",
+    "apps.core",
     "apps.users",
     "apps.organisations",
     "apps.leave",
