@@ -9,6 +9,8 @@ from django.views.decorators.http import require_http_methods, require_POST
 from .forms import LeaveEntryForm
 from .models import LeaveCalculator, LeaveEntry
 
+MAX_RANGE_DAYS = 365
+
 
 @login_required
 def month_view(request: HttpRequest, year: int = None, month: int = None) -> HttpResponse:
@@ -142,6 +144,9 @@ def add_range(request: HttpRequest) -> HttpResponse:
 
     if start_date > end_date:
         start_date, end_date = end_date, start_date
+
+    if (end_date - start_date).days > MAX_RANGE_DAYS:
+        return JsonResponse({"error": f"Maximum range is {MAX_RANGE_DAYS} days"}, status=400)
 
     created_count = 0
     current = start_date
