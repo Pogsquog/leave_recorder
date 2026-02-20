@@ -341,9 +341,11 @@ leave_type = models.CharField(
 
 ---
 
-### 12. Organisation Slug Uniqueness
+### 12. Organisation Slug Uniqueness ✅
 
-**File:** `apps/organisations/forms.py`  
+**Status:** ✅ **COMPLETED** - February 20, 2026
+
+**File:** `apps/organisations/forms.py`
 **Issue:** Manual slug generation can create duplicates
 
 **Fix:**

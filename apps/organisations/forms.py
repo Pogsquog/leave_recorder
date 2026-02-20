@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.text import slugify
 
 from .models import Organisation
 
@@ -15,7 +16,15 @@ class OrganisationForm(forms.ModelForm):
         slug = self.cleaned_data.get("slug")
         if not slug:
             name = self.cleaned_data.get("name", "")
-            slug = name.lower().replace(" ", "-")[:50]
+            slug = slugify(name)[:50]
+
+        if slug:
+            original_slug = slug
+            counter = 1
+            while Organisation.objects.filter(slug=slug).exists():
+                slug = f"{original_slug}-{counter}"
+                counter += 1
+
         return slug
 
 
