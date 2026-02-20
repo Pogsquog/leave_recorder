@@ -1,7 +1,7 @@
 # Code Review - Fixes Plan
 
-**Review Date:** February 20, 2026  
-**Project:** Holiday Holliday  
+**Review Date:** February 20, 2026
+**Project:** Holiday Holliday
 **Reviewer:** Qwen Code
 
 ---
@@ -9,6 +9,9 @@
 ## Executive Summary
 
 The Holiday Holliday project is well-structured and implements most core features correctly. This review identified **26 issues** across security, code quality, missing features, testing, and deployment categories.
+
+**Completed:** 7 issues (#1-#7, #12)
+**Remaining:** 19 issues
 
 ### Priority Legend
 
@@ -21,217 +24,7 @@ The Holiday Holliday project is well-structured and implements most core feature
 
 ---
 
-## 🔴 P0 - Critical Issues
-
-### 1. Signal Handler Bug - Organisation Notifications ✅
-
-**Status:** ✅ **COMPLETED** - February 20, 2026
-
-**File:** `apps/organisations/signals.py:46`
-**Issue:** Variable `org` is reused incorrectly, causing potential AttributeError
-
-```python
-# Current (broken)
-for org_id in membership_org_ids:
-    org = OrganisationMembership.objects.filter(organisation_id=org_id).first()
-    if org:
-        group_name = f"org_{org.organisation.slug}"  # ❌ org.organisation doesn't exist
-```
-
-**Fix:**
-```python
-for org_id in membership_org_ids:
-    membership = OrganisationMembership.objects.filter(organisation_id=org_id).first()
-    if membership:
-        group_name = f"org_{membership.organisation.slug}"
-```
-
-**Estimated Effort:** 15 minutes
-
----
-
-### 2. Hardcoded Secret Key Fallback ✅
-
-**Status:** ✅ **COMPLETED** - February 20, 2026
-
-**File:** `config/settings/prod.py:6`
-**Issue:** Default secret key is dangerous in production
-
-```python
-# Current (dangerous)
-SECRET_KEY = os.environ.get("SECRET_KEY", "change-me-in-production")
-```
-
-**Fix:**
-```python
-SECRET_KEY = os.environ.get("SECRET_KEY")
-if not SECRET_KEY:
-    raise ImproperlyConfigured("SECRET_KEY environment variable must be set in production")
-```
-
-**Estimated Effort:** 10 minutes
-
----
-
-### 3. Missing CSRF Exemption on API ✅
-
-**Status:** ✅ **COMPLETED** - February 20, 2026
-
-**File:** `apps/api/csrf.py` (new), `config/settings/prod.py`
-**Issue:** API key authentication should explicitly exempt CSRF checks
-
-**Fix:** Created custom CSRF middleware that exempts API key authenticated requests:
-
-```python
-# apps/api/csrf.py
-from django.middleware.csrf import CsrfViewMiddleware
-
-
-class CsrfExemptMiddleware(CsrfViewMiddleware):
-    """CSRF middleware that exempts requests authenticated via API key."""
-
-    def _accept(self, request):
-        """Mark request as CSRF exempt."""
-        setattr(request, "_csrf_processing_done", True)
-        return None
-
-    def process_view(self, request, callback, callback_args, callback_kwargs):
-        """Skip CSRF check for API key authenticated requests."""
-        if hasattr(request, "user") and request.user.is_authenticated:
-            api_key = request.META.get("HTTP_X_API_KEY") or request.query_params.get("api_key")
-            if api_key:
-                return self._accept(request)
-        return super().process_view(request, callback, callback_args, callback_kwargs)
-```
-
-Also updated `MIDDLEWARE` in `config/settings/prod.py` to use the custom middleware.
-
-**Estimated Effort:** 30 minutes
-
----
-
-## 🟠 P1 - High Priority Security Issues
-
-### 4. Rate Limiting Not Properly Configured ✅
-
-**Status:** ✅ **COMPLETED** - February 20, 2026
-
-**File:** `config/settings/prod.py`
-**Issue:** Throttling configured but may not work without proper cache backend
-
-**Fix:** Added Redis cache configuration and api_key throttle rate:
-
-```python
-REST_FRAMEWORK = {
-    # ... existing config
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/hour',
-        'user': '1000/hour',
-        'api_key': '5000/hour',
-    },
-}
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': REDIS_URL,
-    }
-}
-```
-
-**Estimated Effort:** 30 minutes
-
----
-
-### 5. API Key Exposure Without Warning ✅
-
-**Status:** ✅ **COMPLETED** - February 20, 2026
-
-**File:** `apps/api/views.py:109`
-**Issue:** API keys shown once without security warning
-
-**Fix:** Added warning message to API key creation response:
-
-```python
-elif request.method == "POST":
-    name = request.data.get("name", "")
-    key = APIKey.objects.create(user=request.user, name=name)
-    return Response(
-        {
-            "id": key.id,
-            "key": key.key,
-            "name": key.name,
-            "warning": "Save this key securely. It will not be shown again.",
-        },
-        status=status.HTTP_201_CREATED,
-    )
-```
-
-**Estimated Effort:** 15 minutes
-
----
-
-### 6. Missing Input Validation - Range Creation ✅
-
-**Status:** ✅ **COMPLETED** - February 20, 2026
-
-**File:** `apps/leave/views.py:117`
-**Issue:** No limit on date range, potential DoS vector
-
-**Fix:**
-```python
-MAX_RANGE_DAYS = 365  # Add to settings or constants
-
-@login_required
-@require_POST
-def add_range(request: HttpRequest) -> HttpResponse:
-    # ... existing code
-    if (end_date - start_date).days > MAX_RANGE_DAYS:
-        return JsonResponse(
-            {"error": f"Maximum range is {MAX_RANGE_DAYS} days"},
-            status=400
-        )
-    # ... rest of function
-```
-
-**Estimated Effort:** 20 minutes
-
----
-
 ## 🟡 P2 - Medium Priority Code Quality
-
-### 7. Duplicate Date Logic ✅
-
-**Status:** ✅ **COMPLETED** - February 20, 2026
-
-**Files:** `apps/leave/models.py`, `apps/leave/views.py`, `apps/organisations/views.py`
-**Issue:** Month end date calculation duplicated
-
-**Fix:** Created utility module `apps/utils/dates.py`:
-
-```python
-from datetime import date, timedelta
-
-def get_month_end_date(year: int, month: int) -> date:
-    """Return the last day of the given month."""
-    if month == 12:
-        return date(year + 1, 1, 1) - timedelta(days=1)
-    return date(year, month + 1, 1) - timedelta(days=1)
-
-def get_month_start_date(year: int, month: int) -> date:
-    """Return the first day of the given month."""
-    return date(year, month, 1)
-```
-
-Updated `apps/leave/models.py` to use the utility functions instead of inline date calculations.
-
-**Estimated Effort:** 45 minutes
-
----
 
 ### 8. Magic Numbers in Templates
 
@@ -338,38 +131,6 @@ leave_type = models.CharField(
 ```
 
 **Estimated Effort:** 1 hour
-
----
-
-### 12. Organisation Slug Uniqueness ✅
-
-**Status:** ✅ **COMPLETED** - February 20, 2026
-
-**File:** `apps/organisations/forms.py`
-**Issue:** Manual slug generation can create duplicates
-
-**Fix:**
-```python
-from django.utils.text import slugify
-from .models import Organisation
-
-def clean_slug(self):
-    slug = self.cleaned_data.get("slug")
-    if not slug:
-        name = self.cleaned_data.get("name", "")
-        slug = slugify(name)[:50]
-    
-    # Ensure uniqueness
-    original_slug = slug
-    counter = 1
-    while Organisation.objects.filter(slug=slug).exists():
-        slug = f"{original_slug}-{counter}"
-        counter += 1
-    
-    return slug
-```
-
-**Estimated Effort:** 30 minutes
 
 ---
 
@@ -664,32 +425,22 @@ Additional test cases:
 
 ## Implementation Order
 
-### Phase 1: Critical Fixes (Week 1)
-1. Signal handler bug (#1)
-2. Secret key fallback (#2)
-3. CSRF exemption (#3)
-4. Rate limiting (#4)
-5. API key warning (#5)
-6. Input validation (#6)
-
-### Phase 2: Code Quality (Week 2-3)
-7. Duplicate date logic (#7)
+### Phase 1: Code Quality (Remaining)
 8. Template magic numbers (#8)
 9. Error handling (#9)
 10. Type hints (#10)
 11. TextChoices (#11)
-12. Slug uniqueness (#12)
 13. Pagination (#13)
 14. Database config (#14)
 
-### Phase 3: Testing (Week 3-4)
+### Phase 2: Testing
 22. Organisation tests (#22)
 23. Signal tests (#23)
 24. WebSocket tests (#24)
 25. Integration tests (#25)
 26. Edge case tests (#26)
 
-### Phase 4: Features & Polish (Week 4-5)
+### Phase 3: Features & Polish
 15. Health checks (#15)
 16. Structured logging (#16)
 17. API docs (#17)
@@ -706,13 +457,10 @@ Additional test cases:
 
 | File | Issues | Priority |
 |------|--------|----------|
-| `apps/organisations/signals.py` | #1 | 🔴 P0 |
-| `config/settings/prod.py` | #2, #4, #14, #16 | 🔴 P0, 🟠 P1 |
-| `apps/api/authentication.py` | #3 | 🔴 P0 |
-| `apps/api/views.py` | #5, #13, #17 | 🟠 P1, 🟡 P2 |
-| `apps/leave/views.py` | #6, #7 | 🟠 P1, 🟡 P2 |
-| `apps/leave/models.py` | #7, #11 | 🟡 P2 |
-| `apps/organisations/forms.py` | #12 | 🟡 P2 |
+| `config/settings/prod.py` | #14, #16 | 🟡 P2, 🟢 P3 |
+| `apps/api/views.py` | #13, #17 | 🟡 P2 |
+| `apps/leave/views.py` | #7 | 🟡 P2 |
+| `apps/leave/models.py` | #11 | 🟡 P2 |
 | `templates/leave/month.html` | #8 | 🟡 P2 |
 | `.gitignore` | #21 | 🟢 P3 |
 
@@ -720,7 +468,6 @@ Additional test cases:
 
 | File | Purpose | Priority |
 |------|---------|----------|
-| `apps/utils/dates.py` | Date utilities | 🟡 P2 |
 | `templatetags/calendar_tags.py` | Calendar template tags | 🟡 P2 |
 | `apps/api/exceptions.py` | Custom exception handler | 🟡 P2 |
 | `apps/core/views.py` | Health check endpoints | 🟢 P3 |
@@ -736,11 +483,10 @@ Additional test cases:
 
 | Phase | Hours |
 |-------|-------|
-| Phase 1: Critical Fixes | 2 hours |
-| Phase 2: Code Quality | 7.5 hours |
-| Phase 3: Testing | 15 hours |
-| Phase 4: Features & Polish | 10.5 hours |
-| **Total** | **35 hours** |
+| Phase 1: Code Quality (Remaining) | 5.5 hours |
+| Phase 2: Testing | 15 hours |
+| Phase 3: Features & Polish | 10.5 hours |
+| **Total Remaining** | **31 hours** |
 
 ---
 
