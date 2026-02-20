@@ -55,5 +55,5 @@ def _notify_org_members(user, message_type, data):
                         "data": data,
                     },
                 )
-    except Exception:
+    except Exception:  # nosec B110 - Silently fail to avoid disrupting leave operations
         pass

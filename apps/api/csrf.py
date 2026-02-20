@@ -6,7 +6,7 @@ class CsrfExemptMiddleware(CsrfViewMiddleware):
 
     def _accept(self, request):
         """Mark request as CSRF exempt."""
-        setattr(request, "_csrf_processing_done", True)
+        request._csrf_processing_done = True  # noqa: SLF001
         return None
 
     def process_view(self, request, callback, callback_args, callback_kwargs):

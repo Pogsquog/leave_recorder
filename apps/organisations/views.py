@@ -119,11 +119,10 @@ def org_leave_view(request: HttpRequest, slug: str) -> HttpResponse:
     year = int(request.GET.get("year", today.year))
     month = int(request.GET.get("month", today.month))
 
-    start_date = date(year, month, 1)
-    if month == 12:
-        end_date = date(year + 1, 1, 1) - timedelta(days=1)
-    else:
-        end_date = date(year, month + 1, 1) - timedelta(days=1)
+    from apps.utils.dates import get_month_end_date, get_month_start_date
+
+    start_date = get_month_start_date(year, month)
+    end_date = get_month_end_date(year, month)
 
     entries = organisation.get_members_leave_entries(start_date, end_date).select_related("user")
 

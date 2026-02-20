@@ -101,11 +101,10 @@ class LeaveCalculator:
     def get_month_data(user, year, month, additional_users=None):
         from calendar import monthcalendar
 
-        start_date = date(year, month, 1)
-        if month == 12:
-            end_date = date(year + 1, 1, 1) - timedelta(days=1)
-        else:
-            end_date = date(year, month + 1, 1) - timedelta(days=1)
+        from apps.utils.dates import get_month_end_date, get_month_start_date
+
+        start_date = get_month_start_date(year, month)
+        end_date = get_month_end_date(year, month)
 
         all_users = [user]
         if additional_users:
