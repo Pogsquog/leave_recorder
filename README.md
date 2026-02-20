@@ -54,8 +54,14 @@ Visit http://localhost:8000
 ### Running Tests
 
 ```bash
+# Run tests with Redis (recommended - all tests pass)
+./scripts/test-with-redis.sh
+
+# Run tests without Redis (some API tests will fail)
 ./scripts/test.sh
 ```
+
+The `test-with-redis.sh` script automatically starts a Redis container before running tests and cleans it up afterwards.
 
 ### Linting
 
