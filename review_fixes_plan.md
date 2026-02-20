@@ -10,8 +10,8 @@
 
 The Holiday Holliday project is well-structured and implements most core features correctly. This review identified **26 issues** across security, code quality, missing features, testing, and deployment categories.
 
-**Completed:** 11 issues (#1-#7, #11, #12, #13, #15)
-**Remaining:** 15 issues
+**Completed:** 12 issues (#1-#7, #11, #12, #13, #15, #16)
+**Remaining:** 14 issues
 
 ### Priority Legend
 
@@ -213,7 +213,9 @@ Endpoints available at `/healthz` and `/ready`.
 
 ---
 
-### 16. Structured Logging for Production
+### 16. Structured Logging for Production ✅
+
+**Status:** COMPLETED
 
 **File:** `config/settings/prod.py`
 
@@ -239,6 +241,8 @@ LOGGING = {
     },
 }
 ```
+
+JSON logging enabled when `PRODUCTION` environment variable is set.
 
 **Estimated Effort:** 30 minutes
 
@@ -445,7 +449,6 @@ Additional test cases:
 26. Edge case tests (#26)
 
 ### Phase 3: Features & Polish
-16. Structured logging (#16)
 17. API docs (#17)
 18. Timezone handling (#18)
 19. i18n support (#19)
@@ -488,8 +491,8 @@ Additional test cases:
 |-------|-------|
 | Phase 1: Code Quality (Remaining) | 5.5 hours |
 | Phase 2: Testing | 15 hours |
-| Phase 3: Features & Polish | 10 hours |
-| **Total Remaining** | **30.5 hours** |
+| Phase 3: Features & Polish | 9.5 hours |
+| **Total Remaining** | **30 hours** |
 
 ---
 

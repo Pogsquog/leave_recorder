@@ -142,6 +142,10 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
+        "json": {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "format": "%(asctime)s %(name)s %(levelname)s %(message)s",
+        },
         "verbose": {
             "format": "{levelname} {asctime} {module} {message}",
             "style": "{",
@@ -150,7 +154,7 @@ LOGGING = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
+            "formatter": "json" if os.environ.get("PRODUCTION") else "verbose",
         },
     },
     "root": {
