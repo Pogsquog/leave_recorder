@@ -63,6 +63,15 @@ Visit http://localhost:8000
 ./scripts/lint.sh
 ```
 
+### Duplicate Code Detection
+
+```bash
+./scripts/dupcheck.sh
+```
+
+Uses [jscpd](https://github.com/kucherenko/jscpd) to detect code duplication across the codebase.
+Configured to scan Python, JavaScript, HTML, CSS, JSON, YAML, and Markdown files.
+
 ## Configuration
 
 Environment variables:

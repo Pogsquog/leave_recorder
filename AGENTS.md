@@ -30,6 +30,9 @@ Holiday Holliday - A simple web app for recording/booking leave.
 
 # Run linting/formatting/security checks
 ./scripts/lint.sh
+
+# Run duplicate code detection
+./scripts/dupcheck.sh
 ```
 
 ### Docker
