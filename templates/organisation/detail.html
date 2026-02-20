@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">{{ organisation.name }}</h1>
+            <a href="{% url 'organisations:leave' organisation.slug %}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                {% trans "View Team Leave" %}
+            </a>
+        </div>
+        
+        <div class="mb-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-3">{% trans "Members" %}</h2>
+            <ul class="divide-y divide-gray-200">
+                {% for member in members %}
+                <li class="py-3 flex items-center justify-between">
+                    <div>
+                        <span class="font-medium">{{ member.user.username }}</span>
+                        {% if member.user.email %}
+                        <span class="text-gray-500 text-sm ml-2">{{ member.user.email }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="text-xs px-2 py-1 rounded-full {% if member.role == 'admin' %}bg-indigo-100 text-indigo-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ member.role }}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        {% if membership.role == 'admin' %}
+        <div class="border-t pt-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-3">{% trans "Invite Members" %}</h2>
+            <form method="post" action="{% url 'organisations:invite' organisation.slug %}" class="flex gap-2">
+                {% csrf_token %}
+                <input type="email" name="email" placeholder="{% trans 'Email address' %}" required
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                    {% trans "Send Invite" %}
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow p-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">{% trans "Preferences" %}</h1>
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="text-red-600 text-sm">
+                {% for field in form %}
+                    {{ field.errors }}
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                    <label for="id_annual_leave_allowance" class="block text-sm font-medium text-gray-700">
+                        {% trans "Annual leave allowance (days)" %}
+                    </label>
+                    <input type="number" name="annual_leave_allowance" id="id_annual_leave_allowance"
+                        value="{{ form.annual_leave_allowance.value }}" min="0"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="id_carryover_max" class="block text-sm font-medium text-gray-700">
+                        {% trans "Max carryover days" %}
+                    </label>
+                    <input type="number" name="carryover_max" id="id_carryover_max"
+                        value="{{ form.carryover_max.value }}" min="0"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="id_carryover_days" class="block text-sm font-medium text-gray-700">
+                        {% trans "Carryover days (current year)" %}
+                    </label>
+                    <input type="number" name="carryover_days" id="id_carryover_days"
+                        value="{{ form.carryover_days.value }}" min="0"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="id_week_start" class="block text-sm font-medium text-gray-700">
+                        {% trans "Week starts on" %}
+                    </label>
+                    <select name="week_start" id="id_week_start"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="1" {% if form.week_start.value == 1 %}selected{% endif %}>{% trans "Monday" %}</option>
+                        <option value="0" {% if form.week_start.value == 0 %}selected{% endif %}>{% trans "Sunday" %}</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="id_year_start_month" class="block text-sm font-medium text-gray-700">
+                        {% trans "Year start month" %}
+                    </label>
+                    <input type="number" name="year_start_month" id="id_year_start_month"
+                        value="{{ form.year_start_month.value }}" min="1" max="12"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="id_year_start_day" class="block text-sm font-medium text-gray-700">
+                        {% trans "Year start day" %}
+                    </label>
+                    <input type="number" name="year_start_day" id="id_year_start_day"
+                        value="{{ form.year_start_day.value }}" min="1" max="31"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                    {% trans "Save" %}
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6 mt-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">{% trans "API Keys" %}</h2>
+        <div id="api-keys" x-data="{ keys: [] }" x-init="fetch('/api/keys/').then(r => r.json()).then(d => keys = d)">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Name" %}</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Created" %}</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Last used" %}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <template x-for="key in keys" :key="key.id">
+                        <tr>
+                            <td class="px-4 py-3 text-sm text-gray-900" x-text="key.name || 'API Key'"></td>
+                            <td class="px-4 py-3 text-sm text-gray-500" x-text="key.created_at"></td>
+                            <td class="px-4 py-3 text-sm text-gray-500" x-text="key.last_used_at || '-'"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <form x-on:submit.prevent="fetch('/api/keys/', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name: $refs.keyName.value})}).then(r => r.json()).then(d => keys.push(d))">
+                <div class="flex gap-2 mt-4">
+                    <input type="text" x-ref="keyName" placeholder="{% trans 'Key name (optional)' %}"
+                        class="flex-1 px-3 py-2 border border-gray-300 rounded-md">
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                        {% trans "Create Key" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

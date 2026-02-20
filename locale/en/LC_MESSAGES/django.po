@@ -1,0 +1,180 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Sign in to your account"
+msgstr ""
+
+msgid "Sign in"
+msgstr ""
+
+msgid "Username"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Confirm password"
+msgstr ""
+
+msgid "Create your account"
+msgstr ""
+
+msgid "Create account"
+msgstr ""
+
+msgid "Don't have an account?"
+msgstr ""
+
+msgid "Register"
+msgstr ""
+
+msgid "Already have an account?"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "Preferences"
+msgstr ""
+
+msgid "Annual leave allowance (days)"
+msgstr ""
+
+msgid "Max carryover days"
+msgstr ""
+
+msgid "Carryover days (current year)"
+msgstr ""
+
+msgid "Week starts on"
+msgstr ""
+
+msgid "Monday"
+msgstr ""
+
+msgid "Sunday"
+msgstr ""
+
+msgid "Year start month"
+msgstr ""
+
+msgid "Year start day"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "API Keys"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Created"
+msgstr ""
+
+msgid "Last used"
+msgstr ""
+
+msgid "Key name (optional)"
+msgstr ""
+
+msgid "Create Key"
+msgstr ""
+
+msgid "Mon"
+msgstr ""
+
+msgid "Tue"
+msgstr ""
+
+msgid "Wed"
+msgstr ""
+
+msgid "Thu"
+msgstr ""
+
+msgid "Fri"
+msgstr ""
+
+msgid "Sat"
+msgstr ""
+
+msgid "Sun"
+msgstr ""
+
+msgid "Vacation"
+msgstr ""
+
+msgid "Sick"
+msgstr ""
+
+msgid "Sick leave"
+msgstr ""
+
+msgid "Leave type:"
+msgstr ""
+
+msgid "Click to toggle full day, right-click for half day"
+msgstr ""
+
+msgid "Leave Summary"
+msgstr ""
+
+msgid "Total allowance"
+msgstr ""
+
+msgid "days"
+msgstr ""
+
+msgid "Taken"
+msgstr ""
+
+msgid "Booked"
+msgstr ""
+
+msgid "Remaining"
+msgstr ""
+
+msgid "Days until year end"
+msgstr ""
+
+msgid "Organisations"
+msgstr ""
+
+msgid "Create organisation"
+msgstr ""
+
+msgid "You are not a member of any organisations."
+msgstr ""
+
+msgid "Create Organisation"
+msgstr ""
+
+msgid "View Team Leave"
+msgstr ""
+
+msgid "Members"
+msgstr ""
+
+msgid "Invite Members"
+msgstr ""
+
+msgid "Email address"
+msgstr ""
+
+msgid "Send Invite"
+msgstr ""
+
+msgid "Slug"
+msgstr ""
+
+msgid "optional"
+msgstr ""
+
+msgid "Auto-generated if left blank"
+msgstr ""
+
+msgid "Create"
+msgstr ""

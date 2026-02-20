@@ -1,0 +1,35 @@
+.bg-vacation {
+    background-color: #c7d2fe;
+}
+
+.bg-sick {
+    background-color: #fecaca;
+}
+
+.bg-half {
+    position: relative;
+}
+
+.bg-half::after {
+    content: "½";
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 0.75rem;
+    color: #6366f1;
+}
+
+.day-cell:hover {
+    background-color: #f3f4f6;
+}
+
+.nav-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 0.25rem;
+    line-height: 4rem;
+    border-bottom-width: 2px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 0.15s;
+}

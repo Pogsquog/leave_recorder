@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+{% load i18n humanize %}
+
+{% block title %}{% blocktrans with month=month_data.month year=month_data.year %}{{ month }}/{{ year }} - Holiday Holliday{% endblocktrans %}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-6">
+    <div class="flex-1">
+        <div class="bg-white rounded-lg shadow">
+            <div class="flex items-center justify-between p-4 border-b">
+                <a href="{% url 'leave:month' month_data.prev_month.year month_data.prev_month.month %}"
+                    class="p-2 hover:bg-gray-100 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </a>
+                <h1 class="text-xl font-bold text-gray-900">
+                    {% blocktrans with month_name=month_data.month|date:"F" year=month_data.year %}{{ month_name }} {{ year }}{% endblocktrans %}
+                </h1>
+                <a href="{% url 'leave:month' month_data.next_month.year month_data.next_month.month %}"
+                    class="p-2 hover:bg-gray-100 rounded-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
+            
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        {% for day in "1234567"|make_list %}
+                        <th class="p-2 text-sm font-medium text-gray-500 text-center">
+                            {% if forloop.counter == 1 %}
+                                {% if week_start == 1 %}{% trans "Mon" %}{% else %}{% trans "Sun" %}{% endif %}
+                            {% elif forloop.counter == 2 %}
+                                {% if week_start == 1 %}{% trans "Tue" %}{% else %}{% trans "Mon" %}{% endif %}
+                            {% elif forloop.counter == 3 %}
+                                {% if week_start == 1 %}{% trans "Wed" %}{% else %}{% trans "Tue" %}{% endif %}
+                            {% elif forloop.counter == 4 %}
+                                {% if week_start == 1 %}{% trans "Thu" %}{% else %}{% trans "Wed" %}{% endif %}
+                            {% elif forloop.counter == 5 %}
+                                {% if week_start == 1 %}{% trans "Fri" %}{% else %}{% trans "Thu" %}{% endif %}
+                            {% elif forloop.counter == 6 %}
+                                {% if week_start == 1 %}{% trans "Sat" %}{% else %}{% trans "Fri" %}{% endif %}
+                            {% else %}
+                                {% if week_start == 1 %}{% trans "Sun" %}{% else %}{% trans "Sat" %}{% endif %}
+                            {% endif %}
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody x-data="calendar()" x-init="$el.addEventListener('mouseup', () => onDragEnd())">
+                    {% for week in month_data.weeks %}
+                    <tr>
+                        {% for day_data in week %}
+                        <td class="border-t border-gray-200 p-0">
+                            {% if day_data %}
+                            <div class="day-cell min-h-[80px] p-1 cursor-pointer
+                                {% if day_data.is_weekend %}bg-gray-50{% endif %}
+                                {% if day_data.is_today %}ring-2 ring-inset ring-indigo-500{% endif %}"
+                                x-on:click="toggle('{{ day_data.date|date:'Y-m-d' }}')"
+                                x-on:contextmenu.prevent="toggleHalf('{{ day_data.date|date:'Y-m-d' }}')"
+                                x-on:mousedown.prevent="onDragStart('{{ day_data.date|date:'Y-m-d' }}')"
+                                x-on:mouseenter.prevent="onDragEnter('{{ day_data.date|date:'Y-m-d' }}')"
+                                :class="{
+                                    'bg-vacation': isVacation('{{ day_data.date|date:'Y-m-d' }}'), 
+                                    'bg-sick': isSick('{{ day_data.date|date:'Y-m-d' }}'), 
+                                    'bg-half': isHalf('{{ day_data.date|date:'Y-m-d' }}'),
+                                    'ring-2 ring-indigo-500': isInDragRange('{{ day_data.date|date:'Y-m-d' }}')
+                                }"
+                                data-date="{{ day_data.date|date:'Y-m-d' }}">
+                                <div class="text-sm text-gray-500">{{ day_data.day }}</div>
+                                <div class="entry-indicator text-xs">
+                                    {% if day_data.entry %}
+                                        {% if day_data.entry.leave_type == 'vacation' %}
+                                            <span class="text-indigo-600">{% if day_data.entry.half_day %}½ {% endif %}{% trans "Vacation" %}</span>
+                                        {% else %}
+                                            <span class="text-red-600">{% if day_data.entry.half_day %}½ {% endif %}{% trans "Sick" %}</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                {% if day_data.other_entries %}
+                                <div class="other-entries text-xs mt-1">
+                                    {% for entry in day_data.other_entries %}
+                                    <div class="text-green-600 text-[10px]">
+                                        {% if entry.half_day %}½ {% endif %}{{ entry.user.username|truncatechars:5 }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <div class="min-h-[80px]"></div>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+                <div class="mt-4 bg-white rounded-lg shadow p-4">
+            <div class="flex items-center gap-4 text-sm">
+                <label for="leave-type" class="font-medium text-gray-700">{% trans "Leave type:" %}</label>
+                <select id="leave-type" class="px-3 py-1 border border-gray-300 rounded-md">
+                    <option value="vacation">{% trans "Vacation" %}</option>
+                    <option value="sick">{% trans "Sick leave" %}</option>
+                </select>
+                <span class="text-gray-500 text-xs">{% trans "Click to toggle full day, right-click for half day, drag to select range" %}</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="lg:w-80">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">{% trans "Leave Summary" %}</h2>
+            <dl class="space-y-3">
+                <div class="flex justify-between">
+                    <dt class="text-gray-600">{% trans "Total allowance" %}</dt>
+                    <dd class="font-medium">{{ year_stats.total_allowance }} {% trans "days" %}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-600">{% trans "Taken" %}</dt>
+                    <dd class="font-medium">{{ year_stats.taken_days }} {% trans "days" %}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-600">{% trans "Booked" %}</dt>
+                    <dd class="font-medium">{{ year_stats.booked_days }} {% trans "days" %}</dd>
+                </div>
+                <div class="flex justify-between border-t pt-3">
+                    <dt class="text-gray-600 font-medium">{% trans "Remaining" %}</dt>
+                    <dd class="font-bold {% if year_stats.remaining_days < 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                        {{ year_stats.remaining_days }} {% trans "days" %}
+                    </dd>
+                </div>
+                <div class="flex justify-between text-sm text-gray-500">
+                    <dt>{% trans "Days until year end" %}</dt>
+                    <dd>{{ year_stats.days_until_year_end }}</dd>
+                </div>
+            </dl>
+        </div>
+        
+        {% if user.organisation_memberships.exists %}
+        <div class="bg-white rounded-lg shadow p-6 mt-4">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">{% trans "Organisations" %}</h2>
+            <ul class="space-y-2">
+                {% for membership in user.organisation_memberships.all %}
+                <li>
+                    <a href="{% url 'organisations:detail' membership.organisation.slug %}"
+                        class="text-indigo-600 hover:text-indigo-800">
+                        {{ membership.organisation.name }}
+                    </a>
+                    <span class="text-xs text-gray-500">({{ membership.role }})</span>
+                </li>
+                {% endfor %}
+            </ul>
+            <a href="{% url 'organisations:create' %}" class="mt-4 inline-block text-sm text-indigo-600 hover:text-indigo-800">
+                {% trans "Create organisation" %}
+            </a>
+        </div>
+
+        {% if org_members %}
+        <div class="bg-white rounded-lg shadow p-6 mt-4">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">{% trans "View Team Leave" %}</h2>
+            <form method="get" action="{% url 'leave:month' month_data.year month_data.month %}">
+                <div class="space-y-2">
+                    {% for member in org_members %}
+                    <label class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="users" value="{{ member.id }}"
+                            {% if member.id in selected_user_ids %}checked{% endif %}
+                            onchange="this.form.submit()">
+                        <span>{{ member.username }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function calendar() {
+    return {
+        entries: {},
+        dragging: false,
+        dragStart: null,
+        dragEnd: null,
+        
+        init() {
+            // Store initial entries from server
+            {% for week in month_data.weeks %}
+                {% for day_data in week %}
+                    {% if day_data and day_data.entry %}
+            this.entries['{{ day_data.date|date:"Y-m-d" }}'] = {
+                type: '{{ day_data.entry.leave_type }}',
+                half: {{ day_data.entry.half_day|lower }}
+            };
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        },
+        
+        isVacation(date) {
+            return this.entries[date]?.type === 'vacation' && !this.entries[date]?.half;
+        },
+        
+        isSick(date) {
+            return this.entries[date]?.type === 'sick';
+        },
+        
+        isHalf(date) {
+            return this.entries[date]?.half;
+        },
+        
+        isDragging() {
+            return this.dragging && this.dragStart && this.dragEnd;
+        },
+        
+        isInDragRange(date) {
+            if (!this.isDragging()) return false;
+            const start = this.dragStart < this.dragEnd ? this.dragStart : this.dragEnd;
+            const end = this.dragStart < this.dragEnd ? this.dragEnd : this.dragStart;
+            return date >= start && date <= end;
+        },
+        
+        onDragStart(date) {
+            this.dragging = true;
+            this.dragStart = date;
+            this.dragEnd = date;
+        },
+        
+        onDragEnter(date) {
+            if (this.dragging) {
+                this.dragEnd = date;
+            }
+        },
+        
+        async onDragEnd() {
+            if (!this.dragging || !this.dragStart || !this.dragEnd) {
+                this.dragging = false;
+                return;
+            }
+            
+            const start = this.dragStart < this.dragEnd ? this.dragStart : this.dragEnd;
+            const end = this.dragStart < this.dragEnd ? this.dragEnd : this.dragStart;
+            
+            const leaveType = document.getElementById('leave-type').value;
+            const response = await fetch('{% url "leave:add_range" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `start_date=${start}&end_date=${end}&leave_type=${leaveType}`
+            });
+            
+            const data = await response.json();
+            
+            if (data.created > 0) {
+                // Refresh to show new entries
+                window.location.reload();
+            }
+            
+            this.dragging = false;
+            this.dragStart = null;
+            this.dragEnd = null;
+        },
+        
+        async toggle(date) {
+            const leaveType = document.getElementById('leave-type').value;
+            const response = await fetch('{% url "leave:toggle" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `date=${date}&leave_type=${leaveType}`
+            });
+            const data = await response.json();
+            
+            if (data.deleted) {
+                delete this.entries[date];
+            } else {
+                this.entries[date] = {
+                    type: leaveType,
+                    half: data.half_day
+                };
+            }
+        },
+        
+        async toggleHalf(date) {
+            const leaveType = document.getElementById('leave-type').value;
+            const response = await fetch('{% url "leave:toggle" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `date=${date}&leave_type=${leaveType}&half_day=true`
+            });
+            const data = await response.json();
+            
+            if (data.deleted) {
+                delete this.entries[date];
+            } else {
+                this.entries[date] = {
+                    type: leaveType,
+                    half: data.half_day
+                };
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,35 @@
+name: holiday-holliday
+properties:
+  configuration:
+    ingress:
+      external: true
+      targetPort: 8000
+    secrets:
+      - name: secret-key
+        value: ${SECRET_KEY}
+      - name: database-url
+        value: ${DATABASE_URL}
+      - name: redis-url
+        value: ${REDIS_URL}
+    activeRevisionsMode: Single
+  template:
+    containers:
+      - name: app
+        image: ${IMAGE_NAME}
+        env:
+          - name: SECRET_KEY
+            secretRef: secret-key
+          - name: DATABASE_URL
+            secretRef: database-url
+          - name: REDIS_URL
+            secretRef: redis-url
+          - name: DEBUG
+            value: "false"
+          - name: ALLOWED_HOSTS
+            value: ${ALLOWED_HOSTS}
+        resources:
+          cpu: 0.5
+          memory: 1.0Gi
+    scale:
+      minReplicas: 1
+      maxReplicas: 3

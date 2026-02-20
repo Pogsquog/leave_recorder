@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="max-w-xl mx-auto">
+    <div class="bg-white rounded-lg shadow p-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">{% trans "Create Organisation" %}</h1>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="id_name" class="block text-sm font-medium text-gray-700">{% trans "Name" %}</label>
+                <input type="text" name="name" id="id_name" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label for="id_slug" class="block text-sm font-medium text-gray-700">{% trans "Slug" %} ({% trans "optional" %})</label>
+                <input type="text" name="slug" id="id_slug"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="{% trans 'Auto-generated if left blank' %}">
+            </div>
+            <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                {% trans "Create" %}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

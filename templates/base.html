@@ -1,0 +1,64 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Holiday Holliday{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-gray-100">
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <a href="{% url 'leave:month' %}" class="flex items-center">
+                        <span class="text-xl font-bold text-indigo-600">Holiday Holliday</span>
+                    </a>
+                    <div class="hidden sm:flex sm:ml-6 sm:space-x-8">
+                        <a href="{% url 'leave:month' %}" class="nav-link {% if request.resolver_match.app_name == 'leave' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">Leave</a>
+                        {% if user.organisation_memberships.exists %}
+                        <a href="{% url 'organisations:list' %}" class="nav-link {% if request.resolver_match.app_name == 'organisations' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">Organisations</a>
+                        {% endif %}
+                        <a href="{% url 'api:swagger-ui' %}" class="nav-link border-transparent text-gray-500 hover:text-gray-700">API</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                    <span class="text-gray-700">{{ user.username }}</span>
+                    <a href="{% url 'preferences' %}" class="text-gray-500 hover:text-gray-700">Settings</a>
+                    <a href="{% url 'logout' %}" class="text-gray-500 hover:text-gray-700">Logout</a>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="text-gray-500 hover:text-gray-700">Login</a>
+                    <a href="{% url 'register' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} p-4 rounded-md mb-2 {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        document.body.addEventListener('htmx:configRequest', (event) => {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+    </script>
+    {% block extra_script %}{% endblock %}
+</body>
+</html>
