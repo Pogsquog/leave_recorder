@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from enum import StrEnum
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -7,13 +6,9 @@ from django.utils.translation import gettext_lazy as _
 from apps.utils.dates import get_month_end_date, get_month_start_date
 
 
-class LeaveType(StrEnum):
-    VACATION = "vacation"
-    SICK = "sick"
-
-    @classmethod
-    def choices(cls):
-        return [(item.value, _(item.value.capitalize())) for item in cls]
+class LeaveType(models.TextChoices):
+    VACATION = "vacation", _("Vacation")
+    SICK = "sick", _("Sick")
 
 
 class LeaveEntry(models.Model):
@@ -25,7 +20,7 @@ class LeaveEntry(models.Model):
     date = models.DateField(db_index=True)
     leave_type = models.CharField(
         max_length=20,
-        choices=LeaveType.choices(),
+        choices=LeaveType.choices,
         default=LeaveType.VACATION,
     )
     half_day = models.BooleanField(default=False)

@@ -1,17 +1,12 @@
 import secrets
-from enum import StrEnum
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
-class OrganisationRole(StrEnum):
-    MEMBER = "member"
-    ADMIN = "admin"
-
-    @classmethod
-    def choices(cls):
-        return [(item.value, _(item.value.capitalize())) for item in cls]
+class OrganisationRole(models.TextChoices):
+    MEMBER = "member", _("Member")
+    ADMIN = "admin", _("Admin")
 
 
 class Organisation(models.Model):
@@ -52,7 +47,7 @@ class OrganisationMembership(models.Model):
     )
     role = models.CharField(
         max_length=20,
-        choices=OrganisationRole.choices(),
+        choices=OrganisationRole.choices,
         default=OrganisationRole.MEMBER,
     )
     joined_at = models.DateTimeField(auto_now_add=True)
