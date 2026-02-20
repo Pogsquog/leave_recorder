@@ -25,7 +25,10 @@ Holiday Holliday - A simple web app for recording/booking leave.
 # Run development server (SQLite)
 ./scripts/run.sh
 
-# Run tests
+# Run tests (with Redis - all tests pass)
+./scripts/test-with-redis.sh
+
+# Run tests (without Redis - some API tests fail)
 ./scripts/test.sh
 
 # Run linting/formatting/security checks
