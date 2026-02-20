@@ -4,6 +4,8 @@ from enum import StrEnum
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from apps.utils.dates import get_month_end_date, get_month_start_date
+
 
 class LeaveType(StrEnum):
     VACATION = "vacation"
@@ -101,8 +103,6 @@ class LeaveCalculator:
     def get_month_data(user, year, month, additional_users=None):
         from calendar import monthcalendar
 
-        from apps.utils.dates import get_month_end_date, get_month_start_date
-
         start_date = get_month_start_date(year, month)
         end_date = get_month_end_date(year, month)
 
@@ -161,6 +161,6 @@ class LeaveCalculator:
             "year": year,
             "month": month,
             "weeks": month_days,
-            "prev_month": date(year, month, 1) - timedelta(days=1),
-            "next_month": date(year + (1 if month == 12 else 0), (month % 12) + 1, 1),
+            "prev_month": get_month_start_date(year, month) - timedelta(days=1),
+            "next_month": get_month_start_date(year + (1 if month == 12 else 0), (month % 12) + 1),
         }

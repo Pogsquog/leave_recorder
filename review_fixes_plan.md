@@ -204,12 +204,14 @@ def add_range(request: HttpRequest) -> HttpResponse:
 
 ## 🟡 P2 - Medium Priority Code Quality
 
-### 7. Duplicate Date Logic
+### 7. Duplicate Date Logic ✅
 
-**Files:** `apps/leave/models.py`, `apps/leave/views.py`, `apps/organisations/views.py`  
+**Status:** ✅ **COMPLETED** - February 20, 2026
+
+**Files:** `apps/leave/models.py`, `apps/leave/views.py`, `apps/organisations/views.py`
 **Issue:** Month end date calculation duplicated
 
-**Fix:** Create utility module `apps/utils/dates.py`:
+**Fix:** Created utility module `apps/utils/dates.py`:
 
 ```python
 from datetime import date, timedelta
@@ -224,6 +226,8 @@ def get_month_start_date(year: int, month: int) -> date:
     """Return the first day of the given month."""
     return date(year, month, 1)
 ```
+
+Updated `apps/leave/models.py` to use the utility functions instead of inline date calculations.
 
 **Estimated Effort:** 45 minutes
 
