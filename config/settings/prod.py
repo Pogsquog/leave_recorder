@@ -108,6 +108,8 @@ REST_FRAMEWORK = {
         "user": "1000/hour",
         "api_key": "5000/hour",
     },
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 100,
 }
 
 SPECTACULAR = {

@@ -35,7 +35,8 @@ class TestLeaveAPI:
         LeaveEntry.objects.create(user=user, date=date.today(), leave_type=LeaveType.VACATION)
         response = authenticated_client.get("/api/leave/")
         assert response.status_code == 200
-        assert len(response.data) == 1
+        assert response.data["count"] == 1
+        assert len(response.data["results"]) == 1
 
     def test_create_leave_entry(self, authenticated_client):
         from datetime import date
