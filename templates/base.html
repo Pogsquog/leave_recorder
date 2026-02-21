@@ -23,7 +23,7 @@
                         {% if user.organisation_memberships.exists %}
                         <a href="{% url 'organisations:list' %}" class="nav-link {% if request.resolver_match.app_name == 'organisations' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">Organisations</a>
                         {% endif %}
-                        <a href="{% url 'api:swagger-ui' %}" class="nav-link border-transparent text-gray-500 hover:text-gray-700">API</a>
+                        <a href="{% url 'swagger-ui' %}" class="nav-link border-transparent text-gray-500 hover:text-gray-700">API</a>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">

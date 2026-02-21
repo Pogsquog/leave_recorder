@@ -16,7 +16,11 @@ class LeaveType(models.TextChoices):
 
 
 class LeaveEntry(models.Model):
-    user: models.ForeignKey["User"]
+    user = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="leave_entries",
+    )
     date = models.DateField(db_index=True)
     leave_type = models.CharField(
         max_length=20,

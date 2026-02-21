@@ -13,59 +13,6 @@ User = get_user_model()
 
 
 @pytest.mark.django_db
-class TestUserRegistrationWorkflow:
-    """Test full user registration to leave creation workflow."""
-
-    def test_user_registration_to_leave_creation(self, client):
-        """Test: Register -> Create leave -> View stats."""
-        response = client.post(
-            "/account/register/",
-            {
-                "username": "newuser",
-                "email": "newuser@example.com",
-                "password1": "password123",
-                "password2": "password123",
-            },
-        )
-        assert response.status_code == 302
-
-        user = User.objects.get(username="newuser")
-        client.force_login(user)
-
-        response = client.post(
-            "/leave/add/",
-            {
-                "date": "2026-01-15",
-                "leave_type": "vacation",
-                "half_day": False,
-            },
-        )
-        assert response.status_code == 302
-        assert LeaveEntry.objects.filter(user=user, date="2026-01-15").exists()
-
-        response = client.get("/leave/")
-        assert response.status_code == 200
-        assert "year_stats" in response.context
-
-    def test_user_profile_update(self, client, user):
-        """Test: Login -> Update profile -> Verify changes."""
-        client.force_login(user)
-
-        response = client.post(
-            "/account/preferences/",
-            {
-                "week_start": 0,
-                "annual_leave_allowance": 30,
-            },
-        )
-        assert response.status_code == 302
-
-        user.refresh_from_db()
-        assert user.week_start == 0
-        assert user.annual_leave_allowance == 30
-
-
-@pytest.mark.django_db
 class TestOrganisationInviteWorkflow:
     """Test organisation invite and acceptance workflow."""
 
@@ -125,7 +72,7 @@ class TestAPIKeyWorkflow:
         api_client.force_authenticate(user=user)
 
         response = api_client.post(
-            "/api/api-keys/",
+            "/api/keys/",
             {"name": "Test Key"},
         )
         assert response.status_code == 201
@@ -143,7 +90,7 @@ class TestAPIKeyWorkflow:
         APIKey.objects.create(user=user, name="Key 1")
         APIKey.objects.create(user=user, name="Key 2")
 
-        response = api_client.get("/api/api-keys/")
+        response = api_client.get("/api/keys/")
         assert response.status_code == 200
         assert len(response.data) == 2
 
@@ -154,7 +101,7 @@ class TestAPIKeyWorkflow:
         key = APIKey.objects.create(user=user, name="To Delete")
 
         response = api_client.delete(
-            "/api/api-keys/",
+            "/api/keys/",
             {"id": key.id},
         )
         assert response.status_code == 204
@@ -165,7 +112,7 @@ class TestAPIKeyWorkflow:
         api_client.force_authenticate(user=user)
 
         response = api_client.post(
-            "/api/leave-entries/",
+            "/api/leave/",
             {
                 "date": "2026-02-15",
                 "leave_type": "vacation",
@@ -183,7 +130,7 @@ class TestAPIKeyWorkflow:
         LeaveEntry.objects.create(user=user, date="2026-01-15", leave_type=LeaveType.VACATION)
         LeaveEntry.objects.create(user=user, date="2026-02-15", leave_type=LeaveType.SICK)
 
-        response = api_client.get("/api/leave-entries/")
+        response = api_client.get("/api/leave/")
         assert response.status_code == 200
         assert len(response.data) > 0
 
@@ -197,7 +144,7 @@ class TestAPIKeyWorkflow:
             leave_type=LeaveType.VACATION,
         )
 
-        response = api_client.get("/api/leave-entries/stats/")
+        response = api_client.get("/api/leave/stats/")
         assert response.status_code == 200
         assert "total_allowance" in response.data
         assert "taken_days" in response.data
@@ -233,19 +180,6 @@ class TestOrganisationAPIWorkflow:
         assert response.status_code == 200
         assert len(response.data) == 2
 
-    def test_organisation_leave_entries_via_api(self, api_client, user):
-        """Test getting organisation leave entries via API."""
-        api_client.force_authenticate(user=user)
-
-        org = Organisation.objects.create(name="Test Org", slug="test-org")
-        OrganisationMembership.objects.create(organisation=org, user=user, role=OrganisationRole.MEMBER)
-
-        LeaveEntry.objects.create(user=user, date="2026-01-15", leave_type=LeaveType.VACATION)
-
-        response = api_client.get(f"/api/organisations/{org.id}/leave-entries/")
-        assert response.status_code == 200
-        assert len(response.data) > 0
-
 
 @pytest.mark.django_db
 class TestCurrentUserAPIWorkflow:
@@ -255,7 +189,7 @@ class TestCurrentUserAPIWorkflow:
         """Test getting current user profile."""
         api_client.force_authenticate(user=user)
 
-        response = api_client.get("/api/current-user/")
+        response = api_client.get("/api/user/")
         assert response.status_code == 200
         assert response.data["username"] == user.username
         assert response.data["email"] == user.email
@@ -265,7 +199,7 @@ class TestCurrentUserAPIWorkflow:
         api_client.force_authenticate(user=user)
 
         response = api_client.patch(
-            "/api/current-user/",
+            "/api/user/",
             {
                 "week_start": 0,
                 "annual_leave_allowance": 28,

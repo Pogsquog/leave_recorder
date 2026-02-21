@@ -1,7 +1,7 @@
 """Tests for signal handlers."""
 
 from datetime import date
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -18,7 +18,8 @@ class TestLeaveEntrySignals:
         org = Organisation.objects.create(name="Test Org", slug="test-org")
         OrganisationMembership.objects.create(organisation=org, user=user, role=OrganisationRole.MEMBER)
 
-        with patch("apps.organisations.signals.async_to_sync") as mock_async_to_sync:
+        mock_send = MagicMock()
+        with patch("apps.organisations.signals.async_to_sync", return_value=mock_send):
             LeaveEntry.objects.create(
                 user=user,
                 date=date.today(),
@@ -26,8 +27,8 @@ class TestLeaveEntrySignals:
                 half_day=False,
             )
 
-            assert mock_async_to_sync.called
-            call_args = mock_async_to_sync.call_args
+            assert mock_send.called
+            call_args = mock_send.call_args
             assert call_args[0][1]["type"] == "leave_update"
             assert call_args[0][1]["data"]["action"] == "created"
             assert call_args[0][1]["data"]["user_id"] == user.id
@@ -36,19 +37,21 @@ class TestLeaveEntrySignals:
         org = Organisation.objects.create(name="Test Org", slug="test-org")
         OrganisationMembership.objects.create(organisation=org, user=user, role=OrganisationRole.MEMBER)
 
-        entry = LeaveEntry.objects.create(
+        LeaveEntry.objects.create(
             user=user,
             date=date.today(),
             leave_type=LeaveType.VACATION,
             half_day=False,
         )
 
-        with patch("apps.organisations.signals.async_to_sync") as mock_async_to_sync:
+        mock_send = MagicMock()
+        with patch("apps.organisations.signals.async_to_sync", return_value=mock_send):
+            entry = LeaveEntry.objects.get(user=user, date=date.today())
             entry.half_day = True
             entry.save()
 
-            assert mock_async_to_sync.called
-            call_args = mock_async_to_sync.call_args
+            assert mock_send.called
+            call_args = mock_send.call_args
             assert call_args[0][1]["type"] == "leave_update"
             assert call_args[0][1]["data"]["action"] == "updated"
 
@@ -63,11 +66,12 @@ class TestLeaveEntrySignals:
             half_day=False,
         )
 
-        with patch("apps.organisations.signals.async_to_sync") as mock_async_to_sync:
+        mock_send = MagicMock()
+        with patch("apps.organisations.signals.async_to_sync", return_value=mock_send):
             entry.delete()
 
-            assert mock_async_to_sync.called
-            call_args = mock_async_to_sync.call_args
+            assert mock_send.called
+            call_args = mock_send.call_args
             assert call_args[0][1]["type"] == "leave_update"
             assert call_args[0][1]["data"]["action"] == "deleted"
 
@@ -88,7 +92,8 @@ class TestLeaveEntrySignals:
         org = Organisation.objects.create(name="Test Org", slug="test-org")
         OrganisationMembership.objects.create(organisation=org, user=user, role=OrganisationRole.MEMBER)
 
-        with patch("apps.organisations.signals.async_to_sync") as mock_async_to_sync:
+        mock_send = MagicMock()
+        with patch("apps.organisations.signals.async_to_sync", return_value=mock_send):
             LeaveEntry.objects.create(
                 user=user,
                 date=date(2026, 1, 15),
@@ -96,7 +101,7 @@ class TestLeaveEntrySignals:
                 half_day=True,
             )
 
-            call_args = mock_async_to_sync.call_args
+            call_args = mock_send.call_args
             data = call_args[0][1]["data"]
             assert data["date"] == "2026-01-15"
             assert data["leave_type"] == "sick"

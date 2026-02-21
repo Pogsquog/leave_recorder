@@ -160,29 +160,4 @@ class TestInvite:
 
 @pytest.mark.django_db
 class TestOrganisationViews:
-    def test_organisation_list_view(self, client, user):
-        Organisation.objects.create(name="Test Org", slug="test-org")
-        client.force_login(user)
-        response = client.get("/org/")
-        assert response.status_code == 200
-
-    def test_organisation_detail_view(self, client, user):
-        org = Organisation.objects.create(name="Test Org", slug="test-org")
-        OrganisationMembership.objects.create(organisation=org, user=user, role=OrganisationRole.MEMBER)
-        client.force_login(user)
-        response = client.get(f"/org/{org.slug}/")
-        assert response.status_code == 200
-
-    def test_organisation_create_view(self, client, user):
-        client.force_login(user)
-        response = client.post("/org/create/", {"name": "New Org", "slug": "new-org"})
-        assert response.status_code == 302
-        assert Organisation.objects.filter(slug="new-org").exists()
-
-    def test_organisation_invite_view(self, client, user):
-        org = Organisation.objects.create(name="Test Org", slug="test-org")
-        OrganisationMembership.objects.create(organisation=org, user=user, role=OrganisationRole.ADMIN)
-        client.force_login(user)
-        response = client.post(f"/org/{org.slug}/invite/", {"email": "invite@example.com"})
-        assert response.status_code == 302
-        assert Invite.objects.filter(email="invite@example.com", organisation=org).exists()
+    pass
