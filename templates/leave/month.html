@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n humanize calendar_tags %}
 
-{% block title %}{% blocktrans with month=month_data.month year=month_data.year %}{{ month }}/{{ year }} - Holiday Holliday{% endblocktrans %}{% endblock %}
+{% block title %}{% blocktrans with month_name=month_data.month_date|date:"F" year=month_data.year %}{{ month_name }} {{ year }} - Holiday Holliday{% endblocktrans %}{% endblock %}
 
 {% block content %}
 <div class="flex flex-col lg:flex-row gap-6">
@@ -15,7 +15,7 @@
                     </svg>
                 </a>
                 <h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-400 tracking-wide">
-                    {% blocktrans with month_name=month_data.month|date:"F" year=month_data.year %}{{ month_name }} {{ year }}{% endblocktrans %}
+                    {% blocktrans with month_name=month_data.month_date|date:"F" year=month_data.year %}{{ month_name }} {{ year }}{% endblocktrans %}
                 </h1>
                 <a href="{% url 'leave:month' month_data.next_month.year month_data.next_month.month %}"
                     class="p-2 hover:bg-cyan-500/10 rounded-lg text-gray-400 hover:text-cyan-400 transition-colors">

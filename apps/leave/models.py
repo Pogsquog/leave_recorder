@@ -170,6 +170,7 @@ class LeaveCalculator:
         return {
             "year": year,
             "month": month,
+            "month_date": date(year, month, 1),
             "weeks": month_days,
             "prev_month": get_month_start_date(year, month) - timedelta(days=1),
             "next_month": get_month_start_date(year + (1 if month == 12 else 0), (month % 12) + 1),
