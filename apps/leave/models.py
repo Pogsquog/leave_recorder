@@ -1,9 +1,13 @@
 from datetime import date, timedelta
+from typing import TYPE_CHECKING
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from apps.utils.dates import get_month_end_date, get_month_start_date
+
+if TYPE_CHECKING:
+    from apps.users.models import User
 
 
 class LeaveType(models.TextChoices):
@@ -12,11 +16,7 @@ class LeaveType(models.TextChoices):
 
 
 class LeaveEntry(models.Model):
-    user = models.ForeignKey(
-        "users.User",
-        on_delete=models.CASCADE,
-        related_name="leave_entries",
-    )
+    user: models.ForeignKey["User"]
     date = models.DateField(db_index=True)
     leave_type = models.CharField(
         max_length=20,
@@ -37,12 +37,18 @@ class LeaveEntry(models.Model):
             models.Index(fields=["user", "leave_type"]),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         half = " (½)" if self.half_day else ""
         return f"{self.user.username} - {self.date}{half}"
 
     @classmethod
-    def get_days_for_period(cls, user, start_date, end_date, leave_type=None):
+    def get_days_for_period(
+        cls,
+        user: "User",
+        start_date: date,
+        end_date: date,
+        leave_type: str | None = None,
+    ) -> float:
         queryset = cls.objects.filter(
             user=user,
             date__gte=start_date,
@@ -59,7 +65,7 @@ class LeaveEntry(models.Model):
 
 class LeaveCalculator:
     @staticmethod
-    def get_year_stats(user, year=None):
+    def get_year_stats(user: "User", year: int | None = None) -> dict:
         start_date = user.get_year_start_date(year)
         end_date = user.get_year_end_date(year)
         today = date.today()
@@ -95,7 +101,12 @@ class LeaveCalculator:
         }
 
     @staticmethod
-    def get_month_data(user, year, month, additional_users=None):
+    def get_month_data(
+        user: "User",
+        year: int,
+        month: int,
+        additional_users: list["User"] | None = None,
+    ) -> dict:
         from calendar import monthcalendar
 
         start_date = get_month_start_date(year, month)

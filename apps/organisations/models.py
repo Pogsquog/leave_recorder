@@ -1,7 +1,14 @@
 import secrets
+from datetime import date
+from typing import TYPE_CHECKING
 
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+if TYPE_CHECKING:
+    from apps.leave.models import LeaveEntry
+    from apps.users.models import User
 
 
 class OrganisationRole(models.TextChoices):
@@ -19,10 +26,14 @@ class Organisation(models.Model):
         db_table = "organisations"
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def get_members_leave_entries(self, start_date=None, end_date=None):
+    def get_members_leave_entries(
+        self,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> list["LeaveEntry"]:
         from apps.leave.models import LeaveEntry
 
         user_ids = self.memberships.values_list("user_id", flat=True)
@@ -57,7 +68,7 @@ class OrganisationMembership(models.Model):
         unique_together = ["organisation", "user"]
         ordering = ["joined_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.user.username} @ {self.organisation.name}"
 
 
@@ -82,22 +93,18 @@ class Invite(models.Model):
         db_table = "invites"
         ordering = ["-created_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Invite to {self.organisation.name} for {self.email}"
 
     @property
-    def is_expired(self):
-        from django.utils import timezone
-
+    def is_expired(self) -> bool:
         return self.expires_at < timezone.now()
 
     @property
-    def is_accepted(self):
+    def is_accepted(self) -> bool:
         return self.accepted_at is not None
 
-    def accept(self, user):
-        from django.utils import timezone
-
+    def accept(self, user: "User") -> None:
         OrganisationMembership.objects.create(
             organisation=self.organisation,
             user=user,

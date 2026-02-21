@@ -13,7 +13,11 @@ MAX_RANGE_DAYS = 365
 
 
 @login_required
-def month_view(request: HttpRequest, year: int = None, month: int = None) -> HttpResponse:
+def month_view(
+    request: HttpRequest,
+    year: int | None = None,
+    month: int | None = None,
+) -> HttpResponse:
     today = date.today()
     year = year or today.year
     month = month or today.month
@@ -80,7 +84,7 @@ def add_entry(request: HttpRequest) -> HttpResponse:
 
 @login_required
 @require_POST
-def toggle_entry(request: HttpRequest) -> HttpResponse:
+def toggle_entry(request: HttpRequest) -> JsonResponse:
     date_str = request.POST.get("date")
     leave_type = request.POST.get("leave_type", "vacation")
     half_day = request.POST.get("half_day") == "true"
@@ -130,7 +134,7 @@ def delete_entry(request: HttpRequest, entry_id: int) -> HttpResponse:
 
 @login_required
 @require_POST
-def add_range(request: HttpRequest) -> HttpResponse:
+def add_range(request: HttpRequest) -> JsonResponse:
     start_date_str = request.POST.get("start_date")
     end_date_str = request.POST.get("end_date")
     leave_type = request.POST.get("leave_type", "vacation")
