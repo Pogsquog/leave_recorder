@@ -45,6 +45,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "config.urls"
 
+# Authentication settings
+LOGIN_URL = "account:login"
+LOGIN_REDIRECT_URL = "leave:month"
+LOGOUT_REDIRECT_URL = "login"
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",

@@ -1,51 +1,137 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
+{% block body_class %}min-h-screen bg-gray-950{% endblock %}
+{% block nav %}{% endblock %}
+
 {% block content %}
-<div class="flex items-center justify-center min-h-[60vh]">
-    <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow">
-        <div>
-            <h2 class="text-center text-3xl font-bold text-gray-900">{% trans "Create your account" %}</h2>
+<div class="min-h-[80vh] flex items-center justify-center grid-bg relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-purple-950 -z-10"></div>
+    
+    <div class="absolute top-20 right-20 w-72 h-72 bg-fuchsia-500 rounded-full filter blur-[128px] opacity-20"></div>
+    <div class="absolute bottom-20 left-20 w-72 h-72 bg-cyan-500 rounded-full filter blur-[128px] opacity-20"></div>
+    
+    <div class="max-w-md w-full mx-4">
+        <div class="backdrop-blur-xl bg-gray-900/80 border border-fuchsia-500/30 rounded-2xl p-8 relative" style="box-shadow: 0 0 5px #d946ef, 0 0 20px #d946ef, inset 0 0 10px rgba(217, 70, 239, 0.1);">
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <div class="w-16 h-16 bg-gray-900 border-2 border-fuchsia-400 rounded-full flex items-center justify-center">
+                    <svg class="w-8 h-8 text-fuchsia-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                    </svg>
+                </div>
+            </div>
+            
+            <div class="mt-6 mb-8 text-center">
+                <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-cyan-400 tracking-wider">
+                    NEW IDENTITY
+                </h1>
+                <p class="mt-2 text-fuchsia-300/60 text-sm tracking-widest uppercase">{% trans "Create your account" %}</p>
+            </div>
+            
+            <form method="post" class="space-y-5">
+                {% csrf_token %}
+                {% if form.errors %}
+                <div class="bg-red-900/30 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>
+                            {% for field in form %}
+                                {{ field.errors }}
+                            {% endfor %}
+                            {{ form.non_field_errors }}
+                        </span>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="space-y-4">
+                    <div class="group">
+                        <label for="id_username" class="block text-sm font-medium text-fuchsia-300/80 mb-2 tracking-wide">
+                            {% trans "Username" %}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-fuchsia-400/50 group-focus-within:text-fuchsia-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            </div>
+                            <input type="text" name="username" id="id_username" required value="{{ form.username.value|default:'' }}"
+                                class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-fuchsia-500/30 rounded-lg text-fuchsia-100 placeholder-fuchsia-700 focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400/50 transition-all"
+                                placeholder="{% trans 'Choose a username' %}">
+                        </div>
+                    </div>
+                    
+                    <div class="group">
+                        <label for="id_email" class="block text-sm font-medium text-fuchsia-300/80 mb-2 tracking-wide">
+                            {% trans "Email" %}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-fuchsia-400/50 group-focus-within:text-fuchsia-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <input type="email" name="email" id="id_email" required value="{{ form.email.value|default:'' }}"
+                                class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-fuchsia-500/30 rounded-lg text-fuchsia-100 placeholder-fuchsia-700 focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400/50 transition-all"
+                                placeholder="{% trans 'Enter your email' %}">
+                        </div>
+                    </div>
+                    
+                    <div class="group">
+                        <label for="id_password1" class="block text-sm font-medium text-fuchsia-300/80 mb-2 tracking-wide">
+                            {% trans "Password" %}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-fuchsia-400/50 group-focus-within:text-fuchsia-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                            </div>
+                            <input type="password" name="password1" id="id_password1" required
+                                class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-fuchsia-500/30 rounded-lg text-fuchsia-100 placeholder-fuchsia-700 focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400/50 transition-all"
+                                placeholder="{% trans 'Create a password' %}">
+                        </div>
+                    </div>
+                    
+                    <div class="group">
+                        <label for="id_password2" class="block text-sm font-medium text-fuchsia-300/80 mb-2 tracking-wide">
+                            {% trans "Confirm password" %}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-fuchsia-400/50 group-focus-within:text-fuchsia-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                            </div>
+                            <input type="password" name="password2" id="id_password2" required
+                                class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-fuchsia-500/30 rounded-lg text-fuchsia-100 placeholder-fuchsia-700 focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400/50 transition-all"
+                                placeholder="{% trans 'Confirm your password' %}">
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" 
+                    class="w-full py-3 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-semibold rounded-lg border border-cyan-400/50 hover:from-cyan-500 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition-all tracking-wide uppercase text-sm"
+                    style="box-shadow: 0 0 5px #22d3ee, 0 0 20px #22d3ee, inset 0 0 10px rgba(34, 211, 238, 0.2);">
+                    {% trans "Create account" %}
+                </button>
+            </form>
+            
+            <div class="mt-6 pt-6 border-t border-fuchsia-500/20 text-center">
+                <p class="text-fuchsia-300/60 text-sm">
+                    {% trans "Already have an account?" %}
+                    <a href="{% url 'account:login' %}" 
+                       class="text-cyan-400 hover:text-cyan-300 font-medium transition-colors ml-1">
+                        {% trans "Sign in" %}
+                    </a>
+                </p>
+            </div>
         </div>
-        <form method="post" class="mt-8 space-y-6">
-            {% csrf_token %}
-            {% if form.errors %}
-            <div class="text-red-600 text-sm">
-                {% for field in form %}
-                    {{ field.errors }}
-                {% endfor %}
-                {{ form.non_field_errors }}
-            </div>
-            {% endif %}
-            <div class="space-y-4">
-                <div>
-                    <label for="id_username" class="block text-sm font-medium text-gray-700">{% trans "Username" %}</label>
-                    <input type="text" name="username" id="id_username" required value="{{ form.username.value|default:'' }}"
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label for="id_email" class="block text-sm font-medium text-gray-700">{% trans "Email" %}</label>
-                    <input type="email" name="email" id="id_email" required value="{{ form.email.value|default:'' }}"
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label for="id_password1" class="block text-sm font-medium text-gray-700">{% trans "Password" %}</label>
-                    <input type="password" name="password1" id="id_password1" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label for="id_password2" class="block text-sm font-medium text-gray-700">{% trans "Confirm password" %}</label>
-                    <input type="password" name="password2" id="id_password2" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-            </div>
-            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {% trans "Create account" %}
-            </button>
-        </form>
-        <p class="text-center text-sm text-gray-600">
-            {% trans "Already have an account?" %}
-            <a href="{% url 'login' %}" class="font-medium text-indigo-600 hover:text-indigo-500">{% trans "Sign in" %}</a>
+        
+        <p class="mt-6 text-center text-fuchsia-700 text-xs tracking-widest uppercase">
+            System v2.0 • Identity Creation Terminal
         </p>
     </div>
 </div>

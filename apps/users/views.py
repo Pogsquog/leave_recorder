@@ -15,7 +15,7 @@ class UserLoginView(LoginView):
 
 
 class UserLogoutView(LogoutView):
-    next_page = reverse_lazy("login")
+    next_page = reverse_lazy("account:login")
 
 
 class UserRegistrationView(CreateView):

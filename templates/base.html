@@ -5,12 +5,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Holiday Holliday{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .neon-border {
+                box-shadow: 0 0 5px theme('colors.cyan.400'),
+                            0 0 20px theme('colors.cyan.400'),
+                            inset 0 0 10px rgba(34, 211, 238, 0.1);
+            }
+            .neon-text {
+                text-shadow: 0 0 10px theme('colors.cyan.400'),
+                             0 0 20px theme('colors.cyan.400'),
+                             0 0 40px theme('colors.cyan.400');
+            }
+            .neon-button {
+                box-shadow: 0 0 5px theme('colors.fuchsia.500'),
+                            0 0 20px theme('colors.fuchsia.500'),
+                            inset 0 0 10px rgba(217, 70, 239, 0.2);
+            }
+            .grid-bg {
+                background-image: 
+                    linear-gradient(rgba(34, 211, 238, 0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(34, 211, 238, 0.03) 1px, transparent 1px);
+                background-size: 50px 50px;
+            }
+        }
+    </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="min-h-screen bg-gray-100">
+<body class="{% block body_class %}min-h-screen bg-gray-100{% endblock %}">
+    {% block nav %}
     <nav class="bg-white shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
@@ -29,11 +56,14 @@
                 <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
                     <span class="text-gray-700">{{ user.username }}</span>
-                    <a href="{% url 'preferences' %}" class="text-gray-500 hover:text-gray-700">Settings</a>
-                    <a href="{% url 'logout' %}" class="text-gray-500 hover:text-gray-700">Logout</a>
+                    <a href="{% url 'account:preferences' %}" class="text-gray-500 hover:text-gray-700">Settings</a>
+                    <form action="{% url 'account:logout' %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-gray-500 hover:text-gray-700">Logout</button>
+                    </form>
                     {% else %}
-                    <a href="{% url 'login' %}" class="text-gray-500 hover:text-gray-700">Login</a>
-                    <a href="{% url 'register' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Register</a>
+                    <a href="{% url 'account:login' %}" class="text-gray-500 hover:text-gray-700">Login</a>
+                    <a href="{% url 'account:register' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Register</a>
                     {% endif %}
                     <form action="{% url 'set_language' %}" method="post" class="flex items-center">
                         {% csrf_token %}
@@ -51,6 +81,7 @@
             </div>
         </div>
     </nav>
+    {% endblock %}
 
     {% if messages %}
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
