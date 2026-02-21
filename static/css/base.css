@@ -25,6 +25,10 @@
     background-color: rgba(34, 211, 238, 0.1);
 }
 
+.day-cell.is-today {
+    box-shadow: 0 0 10px rgba(34, 211, 238, 0.4), inset 0 0 20px rgba(34, 211, 238, 0.1);
+}
+
 .nav-link {
     display: inline-flex;
     align-items: center;
