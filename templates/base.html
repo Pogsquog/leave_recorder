@@ -35,6 +35,18 @@
                     <a href="{% url 'login' %}" class="text-gray-500 hover:text-gray-700">Login</a>
                     <a href="{% url 'register' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Register</a>
                     {% endif %}
+                    <form action="{% url 'set_language' %}" method="post" class="flex items-center">
+                        {% csrf_token %}
+                        <select name="language" onchange="this.form.submit()" class="text-sm border-gray-300 rounded-md">
+                            {% get_current_language as LANGUAGE_CODE %}
+                            {% get_available_languages as AVAILABLE_LANGUAGES %}
+                            {% for lang_code, lang_name in AVAILABLE_LANGUAGES %}
+                            <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>
+                                {{ lang_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </form>
                 </div>
             </div>
         </div>

@@ -90,6 +90,10 @@ USE_TZ = True
 
 LANGUAGES = [
     ("en", "English"),
+    ("de", "German"),
+    ("fr", "French"),
+    ("es", "Spanish"),
+    ("it", "Italian"),
 ]
 
 LOCALE_PATHS = [BASE_DIR / "locale"]
@@ -121,6 +125,7 @@ REST_FRAMEWORK = {
     },
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 100,
+    "EXCEPTION_HANDLER": "apps.api.exceptions.custom_exception_handler",
 }
 
 SPECTACULAR = {
