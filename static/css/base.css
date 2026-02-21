@@ -1,9 +1,11 @@
 .bg-vacation {
-    background-color: #c7d2fe;
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.3) 0%, rgba(34, 211, 238, 0.1) 100%);
+    border: 1px solid rgba(34, 211, 238, 0.4);
 }
 
 .bg-sick {
-    background-color: #fecaca;
+    background: linear-gradient(135deg, rgba(248, 113, 113, 0.3) 0%, rgba(248, 113, 113, 0.1) 100%);
+    border: 1px solid rgba(248, 113, 113, 0.4);
 }
 
 .bg-half {
@@ -16,11 +18,11 @@
     top: 2px;
     right: 4px;
     font-size: 0.75rem;
-    color: #6366f1;
+    color: #22d3ee;
 }
 
 .day-cell:hover {
-    background-color: #f3f4f6;
+    background-color: rgba(34, 211, 238, 0.1);
 }
 
 .nav-link {
