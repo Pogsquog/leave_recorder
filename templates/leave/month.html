@@ -261,8 +261,24 @@ function calendar() {
                 
                 const data = await response.json();
                 
-                if (data.created > 0) {
-                    window.location.reload();
+                let current = start;
+                while (current <= end) {
+                    if (data.deleted > 0) {
+                        delete this.entries[current];
+                    } else if (data.created > 0) {
+                        this.entries[current] = {
+                            type: leaveType,
+                            half: false
+                        };
+                    }
+                    const parts = current.split('-');
+                    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+                    d.setDate(d.getDate() + 1);
+                    current = d.toISOString().split('T')[0];
+                }
+                
+                if (data.stats) {
+                    this.$dispatch('stats-updated', data.stats);
                 }
             }
             

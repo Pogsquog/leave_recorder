@@ -184,19 +184,40 @@ def add_range(request: HttpRequest) -> JsonResponse:
     if (end_date - start_date).days > MAX_RANGE_DAYS:
         return JsonResponse({"error": f"Maximum range is {MAX_RANGE_DAYS} days"}, status=400)
 
-    created_count = 0
+    dates_in_range = []
     current = start_date
     while current <= end_date:
-        entry, created = LeaveEntry.objects.get_or_create(
-            user=request.user,
-            date=current,
-            defaults={"leave_type": leave_type, "half_day": half_day},
-        )
-        if created:
-            created_count += 1
+        dates_in_range.append(current)
         current += timedelta(days=1)
 
-    return JsonResponse({"created": created_count})
+    existing_entries = LeaveEntry.objects.filter(
+        user=request.user,
+        date__in=dates_in_range,
+        leave_type=leave_type,
+    )
+    existing_dates = set(existing_entries.values_list("date", flat=True))
+
+    all_set = all(d in existing_dates for d in dates_in_range)
+
+    if all_set:
+        deleted_count = existing_entries.count()
+        existing_entries.delete()
+        stats = LeaveCalculator.get_year_stats(request.user)
+        return JsonResponse({"created": 0, "deleted": deleted_count, "stats": stats})
+
+    created_count = 0
+    for d in dates_in_range:
+        if d not in existing_dates:
+            LeaveEntry.objects.create(
+                user=request.user,
+                date=d,
+                leave_type=leave_type,
+                half_day=half_day,
+            )
+            created_count += 1
+
+    stats = LeaveCalculator.get_year_stats(request.user)
+    return JsonResponse({"created": created_count, "stats": stats})
 
 
 @login_required
