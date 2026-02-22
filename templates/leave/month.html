@@ -25,7 +25,7 @@
                 </a>
             </div>
             
-            <table class="w-full">
+            <table class="w-full table-fixed">
                 <thead>
                     <tr>
                         {% for day in "1234567"|make_list %}
@@ -35,24 +35,26 @@
                         {% endfor %}
                     </tr>
                 </thead>
-                <tbody x-data="calendar()" x-init="$el.addEventListener('mouseup', () => onDragEnd())">
+                <tbody x-data="calendar()">
                     {% for week in month_data.weeks %}
                     <tr>
                         {% for day_data in week %}
                         <td class="border-t border-cyan-500/10 p-0">
                             {% if day_data %}
-                            <div class="day-cell min-h-[80px] p-1 cursor-pointer
+                            <div class="day-cell h-20 p-1 cursor-pointer
                                 {% if day_data.is_weekend %}bg-gray-800/30{% endif %}
                                 {% if day_data.is_today %}is-today ring-2 ring-inset ring-cyan-400 bg-cyan-500/10{% endif %}"
-                                x-on:dblclick.prevent="addLeave('{{ day_data.date|date:'Y-m-d' }}')"
+                                x-on:click="toggleLeave('{{ day_data.date|date:'Y-m-d' }}')"
                                 x-on:contextmenu.prevent="cycleLeave('{{ day_data.date|date:'Y-m-d' }}')"
-                                x-on:mousedown.prevent="onDragStart('{{ day_data.date|date:'Y-m-d' }}')"
-                                x-on:mouseenter.prevent="onDragEnter('{{ day_data.date|date:'Y-m-d' }}')"
+                                x-on:mousedown="startDrag('{{ day_data.date|date:'Y-m-d' }}', $event)"
+                                x-on:mousemove="continueDrag('{{ day_data.date|date:'Y-m-d' }}')"
+                                x-on:mouseup="endDrag($event)"
+                                x-on:mouseleave="cancelDrag()"
                                 :class="{
                                     'bg-vacation': isVacation('{{ day_data.date|date:'Y-m-d' }}'), 
                                     'bg-sick': isSick('{{ day_data.date|date:'Y-m-d' }}'), 
                                     'bg-half': isHalf('{{ day_data.date|date:'Y-m-d' }}'),
-                                    'ring-2 ring-fuchsia-500': isInDragRange('{{ day_data.date|date:'Y-m-d' }}')
+                                    'ring-2 ring-fuchsia-500 bg-fuchsia-500/10': isInDragRange('{{ day_data.date|date:'Y-m-d' }}')
                                 }"
                                 data-date="{{ day_data.date|date:'Y-m-d' }}">
                                 <div class="text-sm {% if day_data.is_today %}text-cyan-400 font-bold{% else %}text-gray-400{% endif %}">{{ day_data.day }}</div>
@@ -68,7 +70,7 @@
                                 {% endif %}
                             </div>
                             {% else %}
-                            <div class="min-h-[80px]"></div>
+                            <div class="h-20"></div>
                             {% endif %}
                         </td>
                         {% endfor %}
@@ -85,7 +87,7 @@
                     <option value="vacation">{% trans "Vacation" %}</option>
                     <option value="sick">{% trans "Sick leave" %}</option>
                 </select>
-                <span class="text-gray-500 text-xs">{% trans "Double-click to add, right-click to cycle: none → full → ½, drag for range" %}</span>
+                <span class="text-gray-500 text-xs">{% trans "Click to toggle leave, right-click cycles: none → full → ½, drag for range" %}</span>
             </div>
         </div>
     </div>
@@ -167,6 +169,7 @@ function calendar() {
         dragging: false,
         dragStart: null,
         dragEnd: null,
+        hasDragged: false,
         
         init() {
             {% for week in month_data.weeks %}
@@ -204,34 +207,43 @@ function calendar() {
             }
         },
         
-        isDragging() {
-            return this.dragging && this.dragStart && this.dragEnd;
-        },
-        
         isInDragRange(date) {
-            if (!this.isDragging()) return false;
+            if (!this.dragging || !this.dragStart || !this.dragEnd) return false;
             const start = this.dragStart < this.dragEnd ? this.dragStart : this.dragEnd;
             const end = this.dragStart < this.dragEnd ? this.dragEnd : this.dragStart;
             return date >= start && date <= end;
         },
         
-        onDragStart(date) {
+        startDrag(date, event) {
+            if (event.button !== 0) return;
             this.dragging = true;
             this.dragStart = date;
             this.dragEnd = date;
+            this.hasDragged = false;
         },
         
-        onDragEnter(date) {
-            if (this.dragging) {
+        continueDrag(date) {
+            if (this.dragging && this.dragEnd !== date) {
                 this.dragEnd = date;
+                this.hasDragged = true;
             }
         },
         
-        async onDragEnd() {
-            if (!this.dragging || !this.dragStart || !this.dragEnd) {
-                this.dragging = false;
+        cancelDrag() {
+            this.dragging = false;
+            this.dragStart = null;
+            this.dragEnd = null;
+            this.hasDragged = false;
+        },
+        
+        async endDrag(event) {
+            if (!this.dragging || !this.hasDragged) {
+                this.cancelDrag();
                 return;
             }
+            
+            event.preventDefault();
+            event.stopPropagation();
             
             const start = this.dragStart < this.dragEnd ? this.dragStart : this.dragEnd;
             const end = this.dragStart < this.dragEnd ? this.dragEnd : this.dragStart;
@@ -252,12 +264,12 @@ function calendar() {
                 window.location.reload();
             }
             
-            this.dragging = false;
-            this.dragStart = null;
-            this.dragEnd = null;
+            this.cancelDrag();
         },
         
-        async addLeave(date) {
+        async toggleLeave(date) {
+            if (this.hasDragged) return;
+            
             const leaveType = document.getElementById('leave-type').value;
             const response = await fetch('{% url "leave:toggle" %}', {
                 method: 'POST',
@@ -280,25 +292,14 @@ function calendar() {
         },
         
         async cycleLeave(date) {
-            const entry = this.entries[date];
             const leaveType = document.getElementById('leave-type').value;
-            
-            let body;
-            if (!entry) {
-                body = `date=${date}&leave_type=${leaveType}`;
-            } else if (!entry.half) {
-                body = `date=${date}&leave_type=${leaveType}&half_day=true`;
-            } else {
-                body = `date=${date}&leave_type=${leaveType}&half_day=true`;
-            }
-            
             const response = await fetch('{% url "leave:toggle" %}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': '{{ csrf_token }}'
                 },
-                body: body
+                body: `date=${date}&leave_type=${leaveType}&cycle=true`
             });
             const data = await response.json();
             

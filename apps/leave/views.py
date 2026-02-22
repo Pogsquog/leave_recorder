@@ -88,11 +88,26 @@ def toggle_entry(request: HttpRequest) -> JsonResponse:
     date_str = request.POST.get("date")
     leave_type = request.POST.get("leave_type", "vacation")
     half_day = request.POST.get("half_day") == "true"
+    cycle = request.POST.get("cycle") == "true"
 
     try:
         entry_date = date.fromisoformat(date_str)
     except ValueError:
         return JsonResponse({"error": "Invalid date"}, status=400)
+
+    if cycle:
+        entry = LeaveEntry.objects.filter(user=request.user, date=entry_date).first()
+
+        if not entry:
+            LeaveEntry.objects.create(user=request.user, date=entry_date, leave_type=leave_type, half_day=False)
+            return JsonResponse({"created": True, "half_day": False, "leave_type": leave_type})
+        elif not entry.half_day:
+            entry.half_day = True
+            entry.save()
+            return JsonResponse({"created": False, "half_day": True, "leave_type": entry.leave_type})
+        else:
+            entry.delete()
+            return JsonResponse({"deleted": True})
 
     entry, created = LeaveEntry.objects.get_or_create(
         user=request.user,
@@ -101,15 +116,13 @@ def toggle_entry(request: HttpRequest) -> JsonResponse:
     )
 
     if not created:
-        if entry.half_day and not half_day:
-            entry.half_day = False
+        if entry.leave_type != leave_type:
+            entry.leave_type = leave_type
+            entry.half_day = half_day
             entry.save()
-        elif not entry.half_day and half_day:
-            entry.half_day = True
+        elif entry.half_day != half_day:
+            entry.half_day = half_day
             entry.save()
-        elif entry.half_day and half_day:
-            entry.delete()
-            return JsonResponse({"deleted": True})
         else:
             entry.delete()
             return JsonResponse({"deleted": True})
