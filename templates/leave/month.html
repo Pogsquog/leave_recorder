@@ -35,21 +35,20 @@
                         {% endfor %}
                     </tr>
                 </thead>
-                <tbody x-data="calendar()">
+                <tbody x-data="calendar()" @mouseleave="cancelDrag()">
                     {% for week in month_data.weeks %}
                     <tr>
                         {% for day_data in week %}
                         <td class="border-t border-cyan-500/10 p-0">
                             {% if day_data %}
-                            <div class="day-cell h-20 p-1 cursor-pointer
+                            <div class="day-cell h-20 p-1 cursor-pointer select-none
                                 {% if day_data.is_weekend %}bg-gray-800/30{% endif %}
                                 {% if day_data.is_today %}is-today ring-2 ring-inset ring-cyan-400 bg-cyan-500/10{% endif %}"
-                                x-on:click="toggleLeave('{{ day_data.date|date:'Y-m-d' }}')"
+                                x-on:click="handleClick('{{ day_data.date|date:'Y-m-d' }}')"
                                 x-on:contextmenu.prevent="cycleLeave('{{ day_data.date|date:'Y-m-d' }}')"
-                                x-on:mousedown="startDrag('{{ day_data.date|date:'Y-m-d' }}', $event)"
-                                x-on:mousemove="continueDrag('{{ day_data.date|date:'Y-m-d' }}')"
-                                x-on:mouseup="endDrag($event)"
-                                x-on:mouseleave="cancelDrag()"
+                                x-on:pointerdown="startDrag('{{ day_data.date|date:'Y-m-d' }}', $event)"
+                                x-on:pointerup="endDrag('{{ day_data.date|date:'Y-m-d' }}', $event)"
+                                x-on:pointermove="continueDrag('{{ day_data.date|date:'Y-m-d' }}')"
                                 :class="{
                                     'bg-vacation': isVacation('{{ day_data.date|date:'Y-m-d' }}'), 
                                     'bg-sick': isSick('{{ day_data.date|date:'Y-m-d' }}'), 
@@ -92,31 +91,31 @@
         </div>
     </div>
     
-    <div class="lg:w-80">
+    <div class="lg:w-80" x-data="summary({{ year_stats.total_allowance }}, {{ year_stats.taken_days }}, {{ year_stats.booked_days }}, {{ year_stats.remaining_days }}, {{ year_stats.days_until_year_end }})" @stats-updated.window="updateStats($event.detail)">
         <div class="card-dark rounded-xl backdrop-blur-xl p-6 neon-border">
             <h2 class="text-lg font-bold text-cyan-400 mb-4 tracking-wide">{% trans "Leave Summary" %}</h2>
             <dl class="space-y-3">
                 <div class="flex justify-between">
                     <dt class="text-gray-400">{% trans "Total allowance" %}</dt>
-                    <dd class="font-medium text-cyan-300">{{ year_stats.total_allowance }} {% trans "days" %}</dd>
+                    <dd class="font-medium text-cyan-300"><span x-text="totalAllowance"></span> {% trans "days" %}</dd>
                 </div>
                 <div class="flex justify-between">
                     <dt class="text-gray-400">{% trans "Taken" %}</dt>
-                    <dd class="font-medium text-cyan-300">{{ year_stats.taken_days }} {% trans "days" %}</dd>
+                    <dd class="font-medium text-cyan-300"><span x-text="takenDays"></span> {% trans "days" %}</dd>
                 </div>
                 <div class="flex justify-between">
                     <dt class="text-gray-400">{% trans "Booked" %}</dt>
-                    <dd class="font-medium text-cyan-300">{{ year_stats.booked_days }} {% trans "days" %}</dd>
+                    <dd class="font-medium text-cyan-300"><span x-text="bookedDays"></span> {% trans "days" %}</dd>
                 </div>
                 <div class="flex justify-between border-t border-cyan-500/20 pt-3">
                     <dt class="text-gray-300 font-medium">{% trans "Remaining" %}</dt>
-                    <dd class="font-bold {% if year_stats.remaining_days < 0 %}text-red-400{% else %}text-green-400{% endif %}">
-                        {{ year_stats.remaining_days }} {% trans "days" %}
+                    <dd class="font-bold" :class="remainingDays < 0 ? 'text-red-400' : 'text-green-400'">
+                        <span x-text="remainingDays"></span> {% trans "days" %}
                     </dd>
                 </div>
                 <div class="flex justify-between text-sm text-gray-500">
                     <dt>{% trans "Days until year end" %}</dt>
-                    <dd>{{ year_stats.days_until_year_end }}</dd>
+                    <dd x-text="daysUntilYearEnd"></dd>
                 </div>
             </dl>
         </div>
@@ -169,7 +168,8 @@ function calendar() {
         dragging: false,
         dragStart: null,
         dragEnd: null,
-        hasDragged: false,
+        dragStartTime: 0,
+        hasMoved: false,
         
         init() {
             {% for week in month_data.weeks %}
@@ -215,17 +215,19 @@ function calendar() {
         },
         
         startDrag(date, event) {
-            if (event.button !== 0) return;
+            if (event.button !== 0 && event.pointerType === 'mouse') return;
             this.dragging = true;
             this.dragStart = date;
             this.dragEnd = date;
-            this.hasDragged = false;
+            this.dragStartTime = Date.now();
+            this.hasMoved = false;
         },
         
         continueDrag(date) {
-            if (this.dragging && this.dragEnd !== date) {
+            if (!this.dragging) return;
+            if (this.dragEnd !== date) {
                 this.dragEnd = date;
-                this.hasDragged = true;
+                this.hasMoved = true;
             }
         },
         
@@ -233,43 +235,46 @@ function calendar() {
             this.dragging = false;
             this.dragStart = null;
             this.dragEnd = null;
-            this.hasDragged = false;
+            this.hasMoved = false;
         },
         
-        async endDrag(event) {
-            if (!this.dragging || !this.hasDragged) {
-                this.cancelDrag();
-                return;
-            }
+        async endDrag(date, event) {
+            if (!this.dragging) return;
             
-            event.preventDefault();
-            event.stopPropagation();
+            const wasDrag = this.hasMoved || (Date.now() - this.dragStartTime > 200 && this.dragStart === date);
             
-            const start = this.dragStart < this.dragEnd ? this.dragStart : this.dragEnd;
-            const end = this.dragStart < this.dragEnd ? this.dragEnd : this.dragStart;
-            
-            const leaveType = document.getElementById('leave-type').value;
-            const response = await fetch('{% url "leave:add_range" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: `start_date=${start}&end_date=${end}&leave_type=${leaveType}`
-            });
-            
-            const data = await response.json();
-            
-            if (data.created > 0) {
-                window.location.reload();
+            if (wasDrag && this.dragStart !== this.dragEnd) {
+                event.preventDefault();
+                
+                const start = this.dragStart < this.dragEnd ? this.dragStart : this.dragEnd;
+                const end = this.dragStart < this.dragEnd ? this.dragEnd : this.dragStart;
+                
+                const leaveType = document.getElementById('leave-type').value;
+                const response = await fetch('{% url "leave:add_range" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: `start_date=${start}&end_date=${end}&leave_type=${leaveType}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.created > 0) {
+                    window.location.reload();
+                }
             }
             
             this.cancelDrag();
         },
         
+        handleClick(date) {
+            if (this.hasMoved) return;
+            this.toggleLeave(date);
+        },
+        
         async toggleLeave(date) {
-            if (this.hasDragged) return;
-            
             const leaveType = document.getElementById('leave-type').value;
             const response = await fetch('{% url "leave:toggle" %}', {
                 method: 'POST',
@@ -288,6 +293,10 @@ function calendar() {
                     type: data.leave_type,
                     half: data.half_day
                 };
+            }
+            
+            if (data.stats) {
+                this.$dispatch('stats-updated', data.stats);
             }
         },
         
@@ -311,6 +320,28 @@ function calendar() {
                     half: data.half_day
                 };
             }
+            
+            if (data.stats) {
+                this.$dispatch('stats-updated', data.stats);
+            }
+        }
+    }
+}
+
+function summary(totalAllowance, takenDays, bookedDays, remainingDays, daysUntilYearEnd) {
+    return {
+        totalAllowance: totalAllowance,
+        takenDays: takenDays,
+        bookedDays: bookedDays,
+        remainingDays: remainingDays,
+        daysUntilYearEnd: daysUntilYearEnd,
+        
+        updateStats(stats) {
+            this.totalAllowance = stats.total_allowance;
+            this.takenDays = stats.taken_days;
+            this.bookedDays = stats.booked_days;
+            this.remainingDays = stats.remaining_days;
+            this.daysUntilYearEnd = stats.days_until_year_end;
         }
     }
 }

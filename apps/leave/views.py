@@ -97,17 +97,33 @@ def toggle_entry(request: HttpRequest) -> JsonResponse:
 
     if cycle:
         entry = LeaveEntry.objects.filter(user=request.user, date=entry_date).first()
+        deleted = False
+        half_day_result = False
+        leave_type_result = leave_type
 
         if not entry:
-            LeaveEntry.objects.create(user=request.user, date=entry_date, leave_type=leave_type, half_day=False)
-            return JsonResponse({"created": True, "half_day": False, "leave_type": leave_type})
+            entry = LeaveEntry.objects.create(user=request.user, date=entry_date, leave_type=leave_type, half_day=False)
+            half_day_result = False
+            leave_type_result = leave_type
         elif not entry.half_day:
             entry.half_day = True
             entry.save()
-            return JsonResponse({"created": False, "half_day": True, "leave_type": entry.leave_type})
+            half_day_result = True
+            leave_type_result = entry.leave_type
         else:
             entry.delete()
-            return JsonResponse({"deleted": True})
+            deleted = True
+
+        stats = LeaveCalculator.get_year_stats(request.user)
+        return JsonResponse(
+            {
+                "created": entry.pk is not None if not deleted else False,
+                "half_day": half_day_result,
+                "leave_type": leave_type_result,
+                "deleted": deleted,
+                "stats": stats,
+            }
+        )
 
     entry, created = LeaveEntry.objects.get_or_create(
         user=request.user,
@@ -125,13 +141,16 @@ def toggle_entry(request: HttpRequest) -> JsonResponse:
             entry.save()
         else:
             entry.delete()
-            return JsonResponse({"deleted": True})
+            stats = LeaveCalculator.get_year_stats(request.user)
+            return JsonResponse({"deleted": True, "stats": stats})
 
+    stats = LeaveCalculator.get_year_stats(request.user)
     return JsonResponse(
         {
             "created": created,
             "half_day": entry.half_day,
             "leave_type": entry.leave_type,
+            "stats": stats,
         }
     )
 
