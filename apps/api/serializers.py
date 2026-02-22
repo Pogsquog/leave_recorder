@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from apps.api.models import APIKey
 from apps.leave.models import LeaveEntry
 from apps.organisations.models import Invite, Organisation, OrganisationMembership
 from apps.users.models import User
@@ -75,3 +76,17 @@ class InviteSerializer(serializers.ModelSerializer):
         model = Invite
         fields = ["id", "organisation", "email", "created_at", "expires_at", "is_expired", "is_accepted"]
         read_only_fields = ["id", "created_at"]
+
+
+class APIKeySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = APIKey
+        fields = ["id", "name", "created_at", "last_used_at"]
+        read_only_fields = ["id", "created_at", "last_used_at"]
+
+
+class APIKeyCreateResponseSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    key = serializers.CharField()
+    name = serializers.CharField()
+    warning = serializers.CharField()

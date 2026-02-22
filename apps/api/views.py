@@ -10,6 +10,8 @@ from apps.organisations.models import Organisation, OrganisationMembership
 
 from .authentication import APIKey
 from .serializers import (
+    APIKeyCreateResponseSerializer,
+    APIKeySerializer,
     LeaveEntrySerializer,
     LeaveStatsSerializer,
     OrganisationMembershipSerializer,
@@ -195,14 +197,23 @@ def current_user(request: Request) -> Response:
 @extend_schema(
     description="Manage API keys for the authenticated user.",
     methods=["GET", "POST", "DELETE"],
+    responses={
+        "GET": APIKeySerializer(many=True),
+        "POST": APIKeyCreateResponseSerializer,
+        "DELETE": None,
+    },
+    request={
+        "POST": {"type": "object", "properties": {"name": {"type": "string"}}},
+        "DELETE": {"type": "object", "properties": {"id": {"type": "integer"}}},
+    },
 )
 @api_view(["GET", "POST", "DELETE"])
 @permission_classes([IsAuthenticated])
 def api_keys(request: Request) -> Response:
     if request.method == "GET":
         keys = APIKey.objects.filter(user=request.user)
-        data = [{"id": k.id, "name": k.name, "created_at": k.created_at, "last_used_at": k.last_used_at} for k in keys]
-        return Response(data)
+        serializer = APIKeySerializer(keys, many=True)
+        return Response(serializer.data)
 
     elif request.method == "POST":
         name = request.data.get("name", "")
@@ -212,7 +223,8 @@ def api_keys(request: Request) -> Response:
                 "id": key.id,
                 "key": key.key,
                 "name": key.name,
-                "warning": "Save this key securely. It will not be shown again.",
+                "created_at": key.created_at,
+                "last_used_at": key.last_used_at,
             },
             status=status.HTTP_201_CREATED,
         )
