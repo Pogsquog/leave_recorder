@@ -44,8 +44,8 @@
                             <div class="day-cell min-h-[80px] p-1 cursor-pointer
                                 {% if day_data.is_weekend %}bg-gray-800/30{% endif %}
                                 {% if day_data.is_today %}is-today ring-2 ring-inset ring-cyan-400 bg-cyan-500/10{% endif %}"
-                                x-on:click="toggle('{{ day_data.date|date:'Y-m-d' }}')"
-                                x-on:contextmenu.prevent="toggleHalf('{{ day_data.date|date:'Y-m-d' }}')"
+                                x-on:dblclick.prevent="addLeave('{{ day_data.date|date:'Y-m-d' }}')"
+                                x-on:contextmenu.prevent="cycleLeave('{{ day_data.date|date:'Y-m-d' }}')"
                                 x-on:mousedown.prevent="onDragStart('{{ day_data.date|date:'Y-m-d' }}')"
                                 x-on:mouseenter.prevent="onDragEnter('{{ day_data.date|date:'Y-m-d' }}')"
                                 :class="{
@@ -56,15 +56,7 @@
                                 }"
                                 data-date="{{ day_data.date|date:'Y-m-d' }}">
                                 <div class="text-sm {% if day_data.is_today %}text-cyan-400 font-bold{% else %}text-gray-400{% endif %}">{{ day_data.day }}</div>
-                                <div class="entry-indicator text-xs">
-                                    {% if day_data.entry %}
-                                        {% if day_data.entry.leave_type == 'vacation' %}
-                                            <span class="text-cyan-400">{% if day_data.entry.half_day %}½ {% endif %}{% trans "Vacation" %}</span>
-                                        {% else %}
-                                            <span class="text-red-400">{% if day_data.entry.half_day %}½ {% endif %}{% trans "Sick" %}</span>
-                                        {% endif %}
-                                    {% endif %}
-                                </div>
+                                <div class="entry-indicator text-xs" x-text="getEntryLabel('{{ day_data.date|date:'Y-m-d' }}')"></div>
                                 {% if day_data.other_entries %}
                                 <div class="other-entries text-xs mt-1">
                                     {% for entry in day_data.other_entries %}
@@ -93,7 +85,7 @@
                     <option value="vacation">{% trans "Vacation" %}</option>
                     <option value="sick">{% trans "Sick leave" %}</option>
                 </select>
-                <span class="text-gray-500 text-xs">{% trans "Click to toggle full day, right-click for half day, drag to select range" %}</span>
+                <span class="text-gray-500 text-xs">{% trans "Double-click to add, right-click to cycle: none → full → ½, drag for range" %}</span>
             </div>
         </div>
     </div>
@@ -190,7 +182,7 @@ function calendar() {
         },
         
         isVacation(date) {
-            return this.entries[date]?.type === 'vacation' && !this.entries[date]?.half;
+            return this.entries[date]?.type === 'vacation';
         },
         
         isSick(date) {
@@ -199,6 +191,17 @@ function calendar() {
         
         isHalf(date) {
             return this.entries[date]?.half;
+        },
+        
+        getEntryLabel(date) {
+            const entry = this.entries[date];
+            if (!entry) return '';
+            const half = entry.half ? '½ ' : '';
+            if (entry.type === 'vacation') {
+                return half + '{% trans "Vacation" %}';
+            } else {
+                return half + '{% trans "Sick" %}';
+            }
         },
         
         isDragging() {
@@ -254,7 +257,7 @@ function calendar() {
             this.dragEnd = null;
         },
         
-        async toggle(date) {
+        async addLeave(date) {
             const leaveType = document.getElementById('leave-type').value;
             const response = await fetch('{% url "leave:toggle" %}', {
                 method: 'POST',
@@ -270,21 +273,32 @@ function calendar() {
                 delete this.entries[date];
             } else {
                 this.entries[date] = {
-                    type: leaveType,
+                    type: data.leave_type,
                     half: data.half_day
                 };
             }
         },
         
-        async toggleHalf(date) {
+        async cycleLeave(date) {
+            const entry = this.entries[date];
             const leaveType = document.getElementById('leave-type').value;
+            
+            let body;
+            if (!entry) {
+                body = `date=${date}&leave_type=${leaveType}`;
+            } else if (!entry.half) {
+                body = `date=${date}&leave_type=${leaveType}&half_day=true`;
+            } else {
+                body = `date=${date}&leave_type=${leaveType}&half_day=true`;
+            }
+            
             const response = await fetch('{% url "leave:toggle" %}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': '{{ csrf_token }}'
                 },
-                body: `date=${date}&leave_type=${leaveType}&half_day=true`
+                body: body
             });
             const data = await response.json();
             
@@ -292,7 +306,7 @@ function calendar() {
                 delete this.entries[date];
             } else {
                 this.entries[date] = {
-                    type: leaveType,
+                    type: data.leave_type,
                     half: data.half_day
                 };
             }

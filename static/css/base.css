@@ -4,8 +4,8 @@
 }
 
 .bg-sick {
-    background: linear-gradient(135deg, rgba(248, 113, 113, 0.3) 0%, rgba(248, 113, 113, 0.1) 100%);
-    border: 1px solid rgba(248, 113, 113, 0.4);
+    background: linear-gradient(135deg, rgba(163, 230, 53, 0.3) 0%, rgba(202, 138, 4, 0.2) 100%);
+    border: 1px solid rgba(202, 138, 4, 0.5);
 }
 
 .bg-half {
