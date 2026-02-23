@@ -1,1 +1,1 @@
-"""Template tags for Holiday Holliday."""
+"""Template tags for Leave Recorder."""

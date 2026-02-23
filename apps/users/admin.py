@@ -52,7 +52,7 @@ class OrganisationMembershipAdmin(admin.ModelAdmin):
 @admin.register(Invite)
 class InviteAdmin(admin.ModelAdmin):
     list_display = ["organisation", "email", "invited_by", "created_at", "is_accepted"]
-    list_filter = ["organisation", "is_accepted"]
+    list_filter = ["organisation", "accepted_at"]
     ordering = ["-created_at"]
 
 

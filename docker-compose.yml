@@ -7,7 +7,7 @@ services:
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
       - DEBUG=${DEBUG:-true}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
-      - DATABASE_URL=postgres://holiday:holiday@db:5432/holiday_holliday
+      - DATABASE_URL=postgres://holiday:holiday@db:5432/leave_recorder
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       db:
@@ -23,13 +23,13 @@ services:
     environment:
       - POSTGRES_USER=holiday
       - POSTGRES_PASSWORD=holiday
-      - POSTGRES_DB=holiday_holliday
+      - POSTGRES_DB=leave_recorder
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U holiday -d holiday_holliday"]
+      test: ["CMD-SHELL", "pg_isready -U holiday -d leave_recorder"]
       interval: 5s
       timeout: 5s
       retries: 5

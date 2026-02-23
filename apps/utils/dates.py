@@ -1,5 +1,3 @@
-"""Date utilities for Holiday Holliday."""
-
 from datetime import date, timedelta
 
 

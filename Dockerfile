@@ -5,6 +5,11 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
+# Build-time SECRET_KEY (only used during build for collectstatic)
+# Production deployments MUST override this via runtime environment variable
+ARG BUILD_SECRET_KEY=build-time-secret-key-not-for-production
+ENV SECRET_KEY=${BUILD_SECRET_KEY}
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*

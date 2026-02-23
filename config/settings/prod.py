@@ -72,7 +72,7 @@ ASGI_APPLICATION = "config.asgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("POSTGRES_NAME", "holiday_holliday"),
+        "NAME": os.environ.get("POSTGRES_NAME", "leave_recorder"),
         "USER": os.environ.get("POSTGRES_USER", "holiday"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
         "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
@@ -134,7 +134,7 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR = {
-    "TITLE": "Holiday Holliday API",
+    "TITLE": "Leave Recorder API",
     "DESCRIPTION": "A simple web app for recording/booking leave",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,

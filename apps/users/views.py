@@ -39,7 +39,7 @@ class UserPreferencesView(UpdateView):
     model = User
     form_class = UserPreferencesForm
     template_name = "account/preferences.html"
-    success_url = reverse_lazy("preferences")
+    success_url = reverse_lazy("account:preferences")
 
     def get_object(self, queryset=None):
         return self.request.user
