@@ -1,4 +1,4 @@
-# Holiday Holliday
+# Leave recorder
 
 A simple web application for recording and booking leave.
 
@@ -93,11 +93,3 @@ Environment variables:
 API documentation is available at `/api/docs/` when running the server.
 
 Generate an API key in your user preferences to authenticate.
-
-## License
-
-AGPL / Commercial
-
-## Author
-
-Stuart Holliday
