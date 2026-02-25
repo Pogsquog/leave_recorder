@@ -1,0 +1,5 @@
+/*
+  SPA redirect: all paths → index.html
+  https://developers.cloudflare.com/pages/configuration/redirects/
+*/
+/*    /index.html    200

@@ -4,92 +4,83 @@ Instructions for AI agents working on this codebase.
 
 ## Project Overview
 
-Holiday Holliday - A simple web app for recording/booking leave.
+Holiday Holliday — A personal leave recorder web app.
 
-## Technology Stack
+## Architecture
 
-- **Backend**: Django 5.x + Django REST Framework + Django Channels
-- **Frontend**: Django templates + HTMX + Alpine.js
-- **Database**: PostgreSQL (production), SQLite (testing/local dev)
-- **Cache/Channels**: Redis
-- **Deployment**: Azure Container Apps
+- **Frontend**: React + Vite SPA in `frontend/`
+- **Database + Auth**: Supabase (Postgres with RLS, email auth)
+- **Deployment**: Cloudflare Pages
+
+The original Django backend (`apps/`, `config/`, `templates/`) is retained for reference but is no longer active.
+
+## Tech Stack
+
+- **Frontend**: React 18, React Router 6, Supabase JS SDK
+- **Database**: Supabase Postgres (tables: `leave_entries`, `user_preferences`)
+- **Auth**: Supabase Auth (email/password)
+- **Deployment**: Cloudflare Pages
 
 ## Commands
 
 ### Local Development
 
 ```bash
-# Setup development environment
-./scripts/setup.sh
-
-# Run development server (SQLite)
-./scripts/run.sh
-
-# Run tests (with Redis - all tests pass)
-./scripts/test-with-redis.sh
-
-# Run tests (without Redis - some API tests fail)
-./scripts/test.sh
-
-# Run linting/formatting/security checks
-./scripts/lint.sh
-
-# Run duplicate code detection
-./scripts/dupcheck.sh
+cd frontend
+cp .env.example .env   # fill in Supabase credentials
+npm install
+npm run dev            # http://localhost:5173
 ```
 
-### Docker
+### Build
 
 ```bash
-# Run in Docker (PostgreSQL + Redis)
-./scripts/docker-run.sh
-
-# Run tests in Docker
-./scripts/docker-test.sh
+cd frontend
+npm run build          # output in frontend/dist/
 ```
 
-### Django Management Commands
+## Frontend Structure
 
-```bash
-# Create superuser
-source .venv/bin/activate
-python manage.py createsu
-
-# Run migrations
-python manage.py migrate
-
-# Collect static files
-python manage.py collectstatic --noinput
 ```
+frontend/
+  src/
+    supabase.js        # Supabase client (reads VITE_SUPABASE_* env vars)
+    App.jsx            # Auth gate + React Router layout
+    pages/
+      Login.jsx        # Login + register (combined)
+      Calendar.jsx     # Main month view with leave CRUD
+      Preferences.jsx  # User settings
+    components/
+      MonthPicker.jsx
+      YearStats.jsx
+    lib/
+      leaveApi.js      # leave_entries CRUD via Supabase
+      prefsApi.js      # user_preferences CRUD
+      leaveCalc.js     # Year stats calculation (JS port of Python LeaveCalculator)
+      dateUtils.js     # Date helpers (JS port of apps/utils/dates.py)
+    index.css          # Neon dark theme utility classes
+  public/
+    _redirects         # Cloudflare Pages SPA routing
+  .env.example
+```
+
+## Supabase Schema
+
+Run `supabase/schema.sql` in the Supabase SQL editor. Tables:
+- `user_preferences` — one row per user (auto-created on signup via trigger)
+- `leave_entries` — one row per leave day per user
+
+RLS policies ensure users can only access their own data.
+
+## Environment Variables
+
+| Variable | Description |
+|---|---|
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key |
 
 ## Code Style
 
-- Use ruff for linting and formatting
-- Line length: 120 characters
-- Target Python: 3.11+
-- No comments unless explicitly requested
-
-## Testing
-
-- pytest with pytest-django
-- Tests in `tests/` directory
-- Settings: `config.settings.test`
-
-## Project Structure
-
-```
-apps/
-  users/          # User model, preferences, auth
-  leave/          # Leave entries, calculations
-  organisations/  # Orgs, membership, invites
-  api/            # REST API, API keys
-config/
-  settings/       # prod.py, test.py
-  urls.py
-  asgi.py
-  wsgi.py
-templates/        # Django templates
-static/           # CSS, JS
-tests/            # Test files
-scripts/          # Shell scripts
-```
+- No TypeScript (plain JS/JSX)
+- Functional components with React hooks
+- No comment blocks unless explicitly requested

@@ -25,6 +25,14 @@ MANIFEST
 .env
 .env.local
 .env.*.local
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/dist/
+
+# Secrets (credentials, keys)
+secrets/
+
 
 *.log
 local_settings.py

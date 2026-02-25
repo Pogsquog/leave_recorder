@@ -1,95 +1,66 @@
-# Leave recorder
+# Leave Recorder
 
-A simple web application for recording and booking leave.
-
-## Features
-
-- Month view calendar with leave tracking
-- Click to add leave, right-click for half days, drag to select date ranges
-- Supports vacation and sick leave
-- Track total allowance, taken days, booked days, and remaining days
-- Organisation support with shared visibility between members
-- Invite mechanism for team collaboration
-- REST API with API key authentication
-- Internationalization support
+A personal leave tracking web app. Record and visualize your annual leave with an interactive calendar.
 
 ## Tech Stack
 
-- **Backend**: Django 5.x + Django REST Framework + Django Channels
-- **Frontend**: Django templates + HTMX + Alpine.js
-- **Database**: PostgreSQL (production), SQLite (development)
-- **Cache/Real-time**: Redis
-- **Deployment**: Azure Container Apps
+- **Frontend**: React + Vite SPA
+- **Backend/DB/Auth**: [Supabase](https://supabase.com) (Postgres + Auth + RLS)
+- **Deployment**: [Cloudflare Pages](https://pages.cloudflare.com)
 
 ## Quick Start
 
 ### Prerequisites
 
-- Python 3.11+
-- PostgreSQL (optional, SQLite for local dev)
-- Redis (optional, for real-time features)
+- Node.js 18+
+- A Supabase project (see [supabase/README.md](./supabase/README.md))
 
 ### Local Development
 
 ```bash
-# Setup development environment
-./scripts/setup.sh
-
-# Run development server
-./scripts/run.sh
+cd frontend
+cp .env.example .env
+# Fill in your Supabase URL and anon key in .env
+npm install
+npm run dev
 ```
 
-Visit http://localhost:8000
+Visit http://localhost:5173
 
-### Docker
+### Build for Production
 
 ```bash
-# Run with Docker
-./scripts/docker-run.sh
-
-# Run tests in Docker
-./scripts/docker-test.sh
+cd frontend
+npm run build
+# Output is in frontend/dist/
 ```
 
-### Running Tests
+## Supabase Setup
 
-```bash
-# Run tests with Redis (recommended - all tests pass)
-./scripts/test-with-redis.sh
+Run [supabase/schema.sql](./supabase/schema.sql) in the Supabase SQL editor. See [supabase/README.md](./supabase/README.md) for full instructions.
 
-# Run tests without Redis (some API tests will fail)
-./scripts/test.sh
-```
+## Cloudflare Pages Deployment
 
-The `test-with-redis.sh` script automatically starts a Redis container before running tests and cleans it up afterwards.
+1. Connect the GitHub repo to Cloudflare Pages
+2. Set **Build command**: `cd frontend && npm run build`
+3. Set **Build output directory**: `frontend/dist`
+4. Add environment variables:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
 
-### Linting
+## Features
 
-```bash
-./scripts/lint.sh
-```
+- Month view calendar with leave tracking
+- Left-click to toggle vacation/sick leave
+- Right-click to toggle half-day
+- Click and drag to select a date range
+- Year stats: total allowance, taken, booked, remaining days
+- User preferences: allowance, carryover, week start, leave year start
+- Supabase Auth (email + password) with Row Level Security
 
-### Duplicate Code Detection
+## Environment Variables
 
-```bash
-./scripts/dupcheck.sh
-```
-
-Uses [jscpd](https://github.com/kucherenko/jscpd) to detect code duplication across the codebase.
-Configured to scan Python, JavaScript, HTML, CSS, JSON, YAML, and Markdown files.
-
-## Configuration
-
-Environment variables:
-
-- `SECRET_KEY` - Django secret key
-- `DEBUG` - Set to "true" for development
-- `ALLOWED_HOSTS` - Comma-separated list of allowed hosts
-- `DATABASE_URL` - PostgreSQL connection URL
-- `REDIS_URL` - Redis connection URL for channels
-
-## REST API
-
-API documentation is available at `/api/docs/` when running the server.
-
-Generate an API key in your user preferences to authenticate.
+| Variable | Description |
+|---|---|
+| `VITE_SUPABASE_URL` | Your Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon/public key |
