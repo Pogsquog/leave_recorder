@@ -12,7 +12,6 @@ Holiday Holliday — A personal leave recorder web app.
 - **Database + Auth**: Supabase (Postgres with RLS, email auth)
 - **Deployment**: Cloudflare Pages
 
-The original Django backend (`apps/`, `config/`, `templates/`) is retained for reference but is no longer active.
 
 ## Tech Stack
 
