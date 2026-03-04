@@ -66,7 +66,7 @@ export function getYearRange(prefs, year = null) {
  * Compute month data for the calendar grid.
  * Returns weeks array matching the structure used in the UI.
  */
-export function getMonthData(year, month, entries, prefs) {
+export function getMonthData(year, month, entries, prefs, publicHolidays = {}) {
     const entriesByDate = {}
     entries.forEach(e => { entriesByDate[e.date] = e })
 
@@ -81,6 +81,7 @@ export function getMonthData(year, month, entries, prefs) {
                 date,
                 dateStr,
                 entry: entriesByDate[dateStr] || null,
+                publicHoliday: publicHolidays[dateStr] || null,
                 isWeekend: isWeekend(date, prefs?.week_start ?? 1),
                 isToday: dateStr === todayStr,
                 isPast: dateStr < todayStr,

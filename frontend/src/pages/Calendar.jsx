@@ -4,6 +4,7 @@ import { fetchLeaveEntries, cycleEntry, upsertRange } from '../lib/leaveApi.js'
 import { fetchPreferences } from '../lib/prefsApi.js'
 import { getYearStats, getMonthData } from '../lib/leaveCalc.js'
 import { today, toISODate, addDays, getMonthStartDate, getMonthEndDate } from '../lib/dateUtils.js'
+import { getUKPublicHolidaysInRange } from '../lib/ukHolidays.js'
 import MonthPicker from '../components/MonthPicker.jsx'
 import YearStats from '../components/YearStats.jsx'
 
@@ -27,34 +28,37 @@ function DayCell({ cell, onLeftClick, onRightClick, onDragStart, onDragEnter, is
         return <div className="h-14 md:h-16" />
     }
 
-    const { date, dateStr, entry, isWeekend, isToday, isPast } = cell
+    const { date, dateStr, entry, isWeekend, isToday, isPast, publicHoliday } = cell
     const colors = entry ? LEAVE_COLORS[entry.leave_type] : null
     const isHighlighted = isDragHighlight && !isWeekend
+    const isBlocked = isWeekend || publicHoliday
 
     const cellClass = [
-        'h-14 md:h-16 rounded-lg border transition-all duration-100 select-none cursor-pointer relative overflow-hidden',
+        'h-14 md:h-16 rounded-lg border transition-all duration-100 select-none relative overflow-hidden',
         isToday ? 'ring-2 ring-cyan-400/70' : '',
-        isWeekend ? 'opacity-30 cursor-default' : '',
-        isPast && !entry && !isWeekend ? 'opacity-50' : '',
+        isBlocked ? 'opacity-30 cursor-default' : 'cursor-pointer',
+        isPast && !entry && !isWeekend && !publicHoliday ? 'opacity-50' : '',
         entry
             ? (entry.half_day ? colors.half : colors.full)
             : isHighlighted
                 ? 'bg-cyan-500/20 border-cyan-400/40 border'
-                : 'bg-gray-900/40 border-gray-700/40 hover:border-cyan-500/40 hover:bg-gray-800/50',
+                : publicHoliday
+                    ? 'bg-emerald-500/20 border-emerald-400/50 hover:border-emerald-400/60'
+                    : 'bg-gray-900/40 border-gray-700/40 hover:border-cyan-500/40 hover:bg-gray-800/50',
     ].filter(Boolean).join(' ')
 
     const handleRight = (e) => {
         e.preventDefault()
-        if (!isWeekend) onRightClick(dateStr)
+        if (!isBlocked) onRightClick(dateStr)
     }
 
     return (
         <div
             className={cellClass}
-            onClick={() => !isWeekend && onLeftClick(dateStr)}
+            onClick={() => !isBlocked && onLeftClick(dateStr)}
             onContextMenu={handleRight}
-            onMouseDown={() => !isWeekend && onDragStart(date)}
-            onMouseEnter={() => !isWeekend && onDragEnter(date)}
+            onMouseDown={() => !isBlocked && onDragStart(date)}
+            onMouseEnter={() => !isBlocked && onDragEnter(date)}
         >
             <div className={`absolute top-1 left-1.5 text-xs font-medium ${isToday ? 'text-cyan-300 font-bold' : isPast ? 'text-gray-500' : 'text-gray-400'}`}>
                 {date.getDate()}
@@ -68,6 +72,12 @@ function DayCell({ cell, onLeftClick, onRightClick, onDragStart, onDragEnter, is
                     <span className="text-[8px] uppercase tracking-widest opacity-70">
                         {entry.leave_type === 'sick' ? 'S' : 'V'}
                     </span>
+                </div>
+            )}
+
+            {publicHoliday && !entry && (
+                <div className="absolute bottom-1 left-1.5 right-1.5 text-[7px] uppercase tracking-wide text-emerald-300 text-center leading-tight">
+                    {publicHoliday}
                 </div>
             )}
         </div>
@@ -85,6 +95,7 @@ export default function Calendar({ user }) {
     const [dragStart, setDragStart] = useState(null)
     const [dragEnd, setDragEnd] = useState(null)
     const [isDragging, setIsDragging] = useState(false)
+    const [publicHolidays, setPublicHolidays] = useState({})
 
     const loadData = useCallback(async () => {
         setLoading(true)
@@ -103,11 +114,23 @@ export default function Calendar({ user }) {
 
     useEffect(() => { loadData() }, [loadData])
 
+    useEffect(() => {
+        if (!prefs) return
+        const monthStart = getMonthStartDate(year, month)
+        const monthEnd = getMonthEndDate(year, month)
+        const holidays = getUKPublicHolidaysInRange(monthStart, monthEnd)
+        const holidayMap = {}
+        holidays.forEach(h => {
+            holidayMap[h.date] = h.name
+        })
+        setPublicHolidays(holidayMap)
+    }, [year, month, prefs])
+
     const weekDays = prefs?.week_start === 0
         ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
         : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-    const weeks = prefs ? getMonthData(year, month, entries, prefs) : []
+    const weeks = prefs ? getMonthData(year, month, entries, prefs, publicHolidays) : []
     const stats = prefs ? getYearStats(prefs, entries) : null
 
     const handleMonthChange = (y, m) => { setYear(y); setMonth(m) }
@@ -115,6 +138,10 @@ export default function Calendar({ user }) {
 
     const handleLeftClick = async (dateStr) => {
         if (isDragging) return
+        const date = new Date(dateStr)
+        const dow = date.getDay()
+        const isWeekend = dow === 0 || dow === 6
+        if (isWeekend || publicHolidays[dateStr]) return
         try {
             await cycleEntry(dateStr, leaveType, user.id)
             await loadData()
@@ -122,6 +149,7 @@ export default function Calendar({ user }) {
     }
 
     const handleRightClick = async (dateStr) => {
+        if (publicHolidays[dateStr]) return
         try {
             const existing = entries.find(e => e.date === dateStr)
             if (!existing) return
@@ -152,7 +180,9 @@ export default function Calendar({ user }) {
             const isWe = prefs?.week_start === 1
                 ? dow === 0 || dow === 6
                 : dow === 0 || dow === 6
-            if (!isWe) dates.push(new Date(d))
+            const dateStr = toISODate(d)
+            const isPublicHoliday = publicHolidays[dateStr]
+            if (!isWe && !isPublicHoliday) dates.push(new Date(d))
         }
         return dates
     }
@@ -251,6 +281,10 @@ export default function Calendar({ user }) {
                             {cfg.label}
                         </div>
                     ))}
+                    <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                        <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500/30 border border-emerald-400/50" />
+                        Public Holiday
+                    </div>
                     <div className="text-xs text-gray-500 ml-auto">Left-click: toggle • Right-click: ½ day • Drag: range</div>
                 </div>
             </div>
