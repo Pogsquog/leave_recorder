@@ -1,7 +1,7 @@
 /**
  * Leave calculation logic - JS port of apps/leave/models.py LeaveCalculator
  */
-import { getMonthStartDate, getMonthEndDate, toISODate, today, monthCalendar, isWeekend } from './dateUtils.js'
+import { toISODate, today, monthCalendar, isWeekend } from './dateUtils.js'
 
 /**
  * Compute year stats for the given preferences and leave entries array.

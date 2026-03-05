@@ -56,10 +56,6 @@ export default function Preferences() {
         )
     }
 
-    const currentYearStart = YEAR_STARTS.find(
-        y => y.month === prefs.year_start_month && y.day === prefs.year_start_day
-    )
-
     return (
         <div className="max-w-lg mx-auto">
             <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-400 tracking-wider mb-6">

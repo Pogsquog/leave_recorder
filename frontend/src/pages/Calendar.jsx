@@ -23,7 +23,7 @@ const LEAVE_COLORS = {
     },
 }
 
-function DayCell({ cell, onLeftClick, onRightClick, onDragStart, onDragEnter, isDragHighlight, leaveType }) {
+function DayCell({ cell, onLeftClick, onRightClick, onDragStart, onDragEnter, isDragHighlight }) {
     if (!cell) {
         return <div className="h-14 md:h-16" />
     }
@@ -97,24 +97,34 @@ export default function Calendar({ user }) {
     const [isDragging, setIsDragging] = useState(false)
     const [publicHolidays, setPublicHolidays] = useState({})
 
-    const loadData = useCallback(async () => {
-        setLoading(true)
-        try {
-            const [p, e] = await Promise.all([
-                fetchPreferences(),
-                fetchLeaveEntries(),
-            ])
-            setPrefs(p)
-            setEntries(e)
-        } catch (err) {
-            console.error(err)
-        }
-        setLoading(false)
-    }, [])
-
-    useEffect(() => { loadData() }, [loadData])
+    const loadDataRef = useRef(null)
 
     useEffect(() => {
+        const loadData = async () => {
+            setLoading(true)
+            try {
+                const [p, e] = await Promise.all([
+                    fetchPreferences(),
+                    fetchLeaveEntries(),
+                ])
+                setPrefs(p)
+                setEntries(e)
+            } catch (err) {
+                console.error(err)
+            }
+            setLoading(false)
+        }
+        loadDataRef.current = loadData
+        loadData()
+    }, [])
+
+    const loadData = useCallback(() => {
+        if (loadDataRef.current) {
+            loadDataRef.current()
+        }
+    }, [])
+
+    const updatePublicHolidays = useCallback(() => {
         if (!prefs) return
         const monthStart = getMonthStartDate(year, month)
         const monthEnd = getMonthEndDate(year, month)
@@ -125,6 +135,11 @@ export default function Calendar({ user }) {
         })
         setPublicHolidays(holidayMap)
     }, [year, month, prefs])
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        updatePublicHolidays()
+    }, [updatePublicHolidays])
 
     const weekDays = prefs?.week_start === 0
         ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
